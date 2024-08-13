@@ -1,5 +1,10 @@
 package main
 
 func main() {
-	RunScraper()
+	ScrapeHI3()
+	ScrapeGI()
+	ScrapeHSR()
+	ScrapeZZZ()
+	
+	// RunBot()
 }
