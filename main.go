@@ -6,5 +6,5 @@ func main() {
 	ScrapeHSR()
 	ScrapeZZZ()
 	
-	// RunBot()
+	RunBot()
 }

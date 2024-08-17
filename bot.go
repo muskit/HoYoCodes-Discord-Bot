@@ -1,10 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
-	"github.com/joho/godotenv"
 	"github.com/bwmarrin/discordgo"
+	"github.com/joho/godotenv"
 )
 
 func RunBot() {
@@ -17,4 +18,6 @@ func RunBot() {
 
 	// init bot
 	discord, err := discordgo.New("Bot " + "authentication token")
+	fmt.Println(discord)
+	fmt.Println(err)
 }
