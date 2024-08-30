@@ -10,7 +10,7 @@ import (
 // Given a Project Tactics article containing MiHoYo game codes,
 // return a map of codes and their description, as well as
 // the datetime which the data was updated.
-func scrapePJT(url string, listIntroText string) (map[string]string, string) {
+func scrapePJT(url string, identifierText string) (map[string]string, string) {
 	// scraped data
 	activeCodes := make(map[string]string)
 	datetime := ""
@@ -24,7 +24,7 @@ func scrapePJT(url string, listIntroText string) (map[string]string, string) {
 
 	// populate codes
 	c.OnHTML("strong", func(h *colly.HTMLElement) {
-		if strings.Contains(h.Text, listIntroText) {
+		if strings.Contains(h.Text, identifierText) {
 			log.Println("Found intro text, getting code list...")
 
 			list := h.DOM.Parent().Next().Children()
@@ -36,6 +36,8 @@ func scrapePJT(url string, listIntroText string) (map[string]string, string) {
 				activeCodes[key] = desc
 				log.Printf("%d: [%s] (%s)\n", i, key, desc)
 			}
+		} else {
+			log.Printf("Didn't find \"%s\"\n", identifierText)
 		}
 	})
 
@@ -77,6 +79,14 @@ func ScrapeHSR() (map[string]string, string) {
 	return scrapePJT(
 		"https://www.pockettactics.com/honkai-star-rail/codes",
 		"Here are all of the new Honkai Star Rail codes",
+	)
+}
+
+func ScrapeHSRLive() (map[string]string, string) {
+	log.Println("--- [HONKAI STAR RAIL LIVESTREAM CODES] ---")
+	return scrapePJT(
+		"https://www.pockettactics.com/honkai-star-rail/codes",
+		"livestream codes",
 	)
 }
 
