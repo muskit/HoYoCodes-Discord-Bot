@@ -1,0 +1,16 @@
+{
+    "Guilds": [
+        {
+            "id": "int64",
+            "channel_subscriptions": [
+                {
+                    "channel": "int64",
+                    "announce_code_removals": true,
+                    "games": {
+                            "Genshin Impact": "int64 (role to ping)"
+                    }
+                }
+            ]
+        }
+    ]
+}
