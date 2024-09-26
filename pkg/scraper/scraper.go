@@ -1,4 +1,4 @@
-package main
+package scraper
 
 import (
 	"log"
@@ -25,7 +25,7 @@ func scrapePJT(url string, identifierText string) (map[string]string, string) {
 	// populate codes
 	c.OnHTML("strong", func(h *colly.HTMLElement) {
 		if strings.Contains(h.Text, identifierText) {
-			log.Println("Found intro text, getting code list...")
+			log.Println("Found identifier text, getting code list...")
 
 			list := h.DOM.Parent().Next().Children()
 			for i, elem := range list.Nodes {
@@ -37,7 +37,7 @@ func scrapePJT(url string, identifierText string) (map[string]string, string) {
 				log.Printf("%d: [%s] (%s)\n", i, key, desc)
 			}
 		} else {
-			log.Printf("Didn't find \"%s\"\n", identifierText)
+			// log.Printf("Didn't find \"%s\"\n", identifierText)
 		}
 	})
 

@@ -63,7 +63,7 @@ var optionalGameChoices = []*discordgo.ApplicationCommandOption {
 var commands = []*discordgo.ApplicationCommand {
 	{
 		Name:        "echo",
-		Description: "Say something through a bot",
+		Description: "Say something through the bot",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
 				Name:        "message",
@@ -146,11 +146,12 @@ var commands = []*discordgo.ApplicationCommand {
 	},
 }
 
-// Command options typedef
-type CMDOptionsMap = map[string]*discordgo.ApplicationCommandInteractionDataOption
-func parseOptions(options []*discordgo.ApplicationCommandInteractionDataOption) (om CMDOptionsMap) {
-	om = make(CMDOptionsMap)
+// Command arguments typedef
+type CMDArgsMap = map[string]*discordgo.ApplicationCommandInteractionDataOption
+func parseArgs(options []*discordgo.ApplicationCommandInteractionDataOption) (om CMDArgsMap) {
+	om = make(CMDArgsMap)
 	for _, opt := range options {
+		log.Printf("%s = %s\n", opt.Name, opt)
 		om[opt.Name] = opt
 	}
 	return
@@ -164,20 +165,35 @@ func interactionAuthor(i *discordgo.Interaction) *discordgo.User {
 }
 
 // EXAMPLE: echo cmd handler
-func handleEcho(s *discordgo.Session, i *discordgo.InteractionCreate, opts CMDOptionsMap) {
-	
+func handleEcho(s *discordgo.Session, i *discordgo.InteractionCreate, opts CMDArgsMap) {
 	builder := new(strings.Builder)
-	if v, ok := opts["author"]; ok && v.BoolValue() {
-		author := interactionAuthor(i.Interaction)
-		builder.WriteString("**" + author.String() + "** says: ")
-	}
+	author := interactionAuthor(i.Interaction)
+	builder.WriteString("**" + author.String() + "** says: ")
 	builder.WriteString(opts["message"].StringValue())
 
 	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: builder.String(),
+			Flags: discordgo.MessageFlagsEphemeral,
 		},
+		// Type: discordgo.InteractionResponseModal,
+		// Data: &discordgo.InteractionResponseData{
+		// 	Title: "echo",
+		// 	CustomID: "fuck",
+		// 	Content: builder.String(),
+		// 	Components: []discordgo.MessageComponent {
+		// 		discordgo.ActionsRow{
+		// 			Components: []discordgo.MessageComponent {
+		// 				discordgo.TextInput{
+		// 					CustomID: "some_input",
+		// 					Style: discordgo.TextInputShort,
+		// 					Label: "Message",
+		// 				},
+		// 			},
+		// 		},
+		// 	},
+		// },
 	})
 
 	if err != nil {
@@ -220,9 +236,9 @@ func RunBot() {
 
 		// "cast" InteractionData to ApplicationCommandInteractionData
 		data := i.ApplicationCommandData()
-		options := parseOptions(data.Options)
-
 		log.Printf("%s ran %s\n", interactionAuthor(i.Interaction), data.Name)
+
+		options := parseArgs(data.Options)
 
 		// Command matching
 		switch data.Name {
