@@ -25,9 +25,17 @@ func scrapePJT(url string, identifierText string) (map[string]string, string) {
 	// populate codes
 	c.OnHTML("strong", func(h *colly.HTMLElement) {
 		if strings.Contains(h.Text, identifierText) {
-			log.Println("Found identifier text, getting code list...")
+			log.Printf("FOUND HEADER: %s\n", h.Text)
+			if strings.Contains(h.Text, "expire") {
+				log.Println("Appears to have expired according to header; stopping...")
+				return
+			}
 
-			list := h.DOM.Parent().Next().Children()
+			log.Println("Gathering codes...")
+
+			listContainer := h.DOM.Parent().Next()
+			list := listContainer.Children()
+
 			for i, elem := range list.Nodes {
 				entry := elem.FirstChild
 				key := entry.FirstChild.Data
@@ -48,7 +56,7 @@ func scrapePJT(url string, identifierText string) (map[string]string, string) {
 			log.Printf("Update datetime: %s\n", datetime)
 		}
 	})
-	
+
 	// begin scrape
 	c.Visit(url)
 
