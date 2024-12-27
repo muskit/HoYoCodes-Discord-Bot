@@ -104,7 +104,13 @@ var commands = []*discordgo.ApplicationCommand {
 			},
 			{
 				Name: "announce_code_removals",
-				Description: "Determines if bot should announce codes being removed. Default: true",
+				Description: "Determines if bot should announce codes being removed. Default: false",
+				Type: discordgo.ApplicationCommandOptionBoolean,
+				Required: false,
+			},
+			{
+				Name: "announce_code_additions",
+				Description: "Determines if bot should announce codes being added. Default: true",
 				Type: discordgo.ApplicationCommandOptionBoolean,
 				Required: false,
 			},
