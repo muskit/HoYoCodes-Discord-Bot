@@ -1,0 +1,17 @@
+services:
+  # app:
+  mariadb:
+    image: 'mariadb:10.3'
+    ports:
+      - '3306:3306'
+    volumes:
+      - './run/mysql:/var/lib/mysql'
+    environment:
+      # - ALLOW_EMPTY_PASSWORD=yes
+      # - MARIADB_ALLOW_EMPTY_ROOT_PASSWORD=yes
+      - MARIADB_PORT_NUMBER=3306
+      - MARIADB_ROOT_USER=root
+      - MARIADB_ROOT_PASSWORD=snhjckldlnhcjksdgfnlhkjcsgdcdl
+      - MARIADB_USER=monty
+      - MARIADB_PASSWORD=monty
+    container_name: mariadb

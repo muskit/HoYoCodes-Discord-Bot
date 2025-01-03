@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/joho/godotenv"
 )
 
 var gameChoices = []*discordgo.ApplicationCommandOptionChoice {
@@ -209,12 +208,6 @@ func handleEcho(s *discordgo.Session, i *discordgo.InteractionCreate, opts CMDAr
 
 func RunBot() {
 	log.Println("Starting bot...")
-
-	// load .env file
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatalf("could not load .env: %s", err)
-	}
 
 	// get vars from env
 	token := os.Getenv("token")
