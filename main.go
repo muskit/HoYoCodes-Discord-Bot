@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/joho/godotenv"
+	"github.com/muskit/hoyocodes-discord-bot/internal"
 	"github.com/muskit/hoyocodes-discord-bot/pkg/db"
 )
 
@@ -52,5 +53,5 @@ func main() {
 	// scraper.ScrapeHSRLive()
 	// scraper.ScrapeZZZ()
 	
-	RunBot()
+	internal.RunBot()
 }
