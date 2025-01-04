@@ -1,6 +1,6 @@
 #!/bin/sh
 
 cd "$(dirname "$0")/src"
-go build ../app
+go build -o ../app
 cd ..
 ./app
