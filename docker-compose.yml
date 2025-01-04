@@ -5,7 +5,7 @@ services:
     ports:
       - '3306:3306'
     volumes:
-      - './run/mysql:/var/lib/mysql'
+      - './.run/mysql:/var/lib/mysql'
     environment:
       - MARIADB_PORT_NUMBER=3306
       - MARIADB_ROOT_USER=root

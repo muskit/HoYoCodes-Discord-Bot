@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/joho/godotenv"
 )
 
 var gameChoices = []*discordgo.ApplicationCommandOptionChoice {
@@ -156,7 +157,7 @@ type CMDArgsMap = map[string]*discordgo.ApplicationCommandInteractionDataOption
 func parseArgs(options []*discordgo.ApplicationCommandInteractionDataOption) (om CMDArgsMap) {
 	om = make(CMDArgsMap)
 	for _, opt := range options {
-		log.Printf("%s = %s\n", opt.Name, opt)
+		log.Printf("%s = %v\n", opt.Name, opt)
 		om[opt.Name] = opt
 	}
 	return
@@ -208,6 +209,11 @@ func handleEcho(s *discordgo.Session, i *discordgo.InteractionCreate, opts CMDAr
 
 func RunBot() {
 	log.Println("Starting bot...")
+	// read env
+	err := godotenv.Load()
+	if err != nil {
+		log.Printf("WARNING: could not load .env: %v", err)
+	}
 
 	// get vars from env
 	token := os.Getenv("token")
@@ -243,7 +249,6 @@ func RunBot() {
 		switch data.Name {
 		case "echo":
 			handleEcho(s, i, options)
-			break
 		case "active_codes":
 			
 		}

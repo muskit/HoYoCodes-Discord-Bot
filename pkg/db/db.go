@@ -17,12 +17,12 @@ var DBCfg *sql.DB
 var DBCodes *sql.DB
 
 func init() {
-	println("initializing db...")
+	log.Println("initializing db...")
 	
 	// read env
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatalf("could not load .env: %s", err)
+		log.Printf("WARNING: could not load .env: %v", err)
 	}
 
 	// connect to DB and set objects
