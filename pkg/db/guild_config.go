@@ -11,6 +11,12 @@ type GuildAdmin struct {
 	RoleID uint64
 }
 
+func CreateSubscription(channelID uint64) error {
+	_, err := DBCfg.Exec("INSERT INTO Subscriptions VALUES (?)", channelID)
+	return err
+}
+
+//// REMOVE ////
 func AddGuildAdmin(guildID uint64, roleID uint64) error {
 	// TODO: handle duplicate
 	_, err := DBCfg.Exec("INSERT INTO GuildAdmins VALUES (?, ?)", guildID, roleID)

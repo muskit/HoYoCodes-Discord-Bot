@@ -1,3 +1,6 @@
+/**
+ * TODO: move to integration testing with a live running database.
+ */
 package db
 
 import (

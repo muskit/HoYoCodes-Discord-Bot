@@ -1,4 +1,4 @@
-package internal
+package update
 
 // import (
 // 	"github.com/golang-collections/collections/set"
