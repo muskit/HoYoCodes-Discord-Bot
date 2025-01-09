@@ -181,7 +181,6 @@ type CMDArgsMap = map[string]*discordgo.ApplicationCommandInteractionDataOption
 func parseArgs(options []*discordgo.ApplicationCommandInteractionDataOption) (om CMDArgsMap) {
 	om = make(CMDArgsMap)
 	for _, opt := range options {
-		log.Printf("%s=%v\n", opt.Name, opt)
 		om[opt.Name] = opt
 	}
 	return
@@ -197,6 +196,7 @@ func interactionAuthor(i *discordgo.Interaction) *discordgo.User {
 // EXAMPLE: echo cmd handler
 func handleEcho(s *discordgo.Session, i *discordgo.InteractionCreate, opts CMDArgsMap) {
 	builder := new(strings.Builder)
+
 	author := interactionAuthor(i.Interaction)
 	builder.WriteString("**" + author.String() + "** says: ")
 	builder.WriteString(opts["message"].StringValue())
@@ -220,7 +220,7 @@ func handleSubscribe(s *discordgo.Session, i *discordgo.InteractionCreate, opts 
 	notifyRem := false
 
 	if val, exists := opts["channel"]; exists {
-		channel = val.UintValue()
+		channel, _ = strconv.ParseUint(val.ChannelValue(nil).ID, 10, 64)
 	}
 	if val, exists := opts["announce_code_additions"]; exists {
 		notifyAdd = val.BoolValue()
@@ -234,7 +234,7 @@ func handleSubscribe(s *discordgo.Session, i *discordgo.InteractionCreate, opts 
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Content: "Successfully subscribed channel!",
+				Content: fmt.Sprintf("Successfully subscribed <#%v>!", channel),
 				Flags: discordgo.MessageFlagsEphemeral,
 			},
 		})
@@ -248,7 +248,7 @@ func handleSubscribe(s *discordgo.Session, i *discordgo.InteractionCreate, opts 
 			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
-					Content: fmt.Sprintf("Error updating existing subscription: %v", err),
+					Content: fmt.Sprintf("Error updating existing subscription for <#%v>: %v", channel, err),
 					Flags: discordgo.MessageFlagsEphemeral,
 				},
 			})
@@ -257,7 +257,7 @@ func handleSubscribe(s *discordgo.Session, i *discordgo.InteractionCreate, opts 
 			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
-					Content: "Updated existing subscription with provided settings (default otherwise).",
+					Content: fmt.Sprintf("Updated existing subscription for <#%v> with provided settings (default otherwise).", channel),
 					Flags: discordgo.MessageFlagsEphemeral,
 				},
 			})
@@ -269,7 +269,7 @@ func handleSubscribe(s *discordgo.Session, i *discordgo.InteractionCreate, opts 
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content: fmt.Sprintf("Error trying to create subscription: %v", err),
+			Content: fmt.Sprintf("Error trying to create subscription for <#%v>: %v", channel, err),
 			Flags: discordgo.MessageFlagsEphemeral,
 		},
 	})
@@ -278,14 +278,14 @@ func handleSubscribe(s *discordgo.Session, i *discordgo.InteractionCreate, opts 
 func handleUnsubscribe(s *discordgo.Session, i *discordgo.InteractionCreate, opts CMDArgsMap) {
 	channel, _ := strconv.ParseUint(i.ChannelID, 10, 64)
 	if val, exists := opts["channel"]; exists {
-		channel = val.UintValue()
+		channel, _ = strconv.ParseUint(val.StringValue(), 10, 64)
 	}
 	err := db.RemoveSubscription(channel)
 	if err != nil {
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Content: fmt.Sprintf("Error trying to unsubscribe: %v", err),
+				Content: fmt.Sprintf("Error trying to unsubscribe: <#%v>", err),
 				Flags: discordgo.MessageFlagsEphemeral,
 			},
 		})
