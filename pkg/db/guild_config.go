@@ -16,6 +16,16 @@ func CreateSubscription(channelID uint64, additions bool, removals bool) error {
 	return err
 }
 
+func UpdateSubscription(channelID uint64, additions bool, removals bool) error {
+	_, err := DBCfg.Exec("UPDATE Subscriptions SET ping_on_code_add = ?, ping_on_code_remove = ? WHERE channel_id = ?", additions, removals, channelID)
+	return err
+}
+
+func RemoveSubscription(channelID uint64) error {
+	_, err := DBCfg.Exec("DELETE FROM Subscriptions WHERE channel_id = ?", channelID)
+	return err
+}
+
 //// REMOVE ////
 func AddGuildAdmin(guildID uint64, roleID uint64) error {
 	// TODO: handle duplicate

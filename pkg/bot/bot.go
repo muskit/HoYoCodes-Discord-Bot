@@ -14,6 +14,14 @@ import (
 )
 
 var (
+	unimplementedResponse discordgo.InteractionResponse = discordgo.InteractionResponse {
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: "command unimplemented",
+			Flags: discordgo.MessageFlagsEphemeral,
+		},
+	}
+
 	gameChoices = []*discordgo.ApplicationCommandOptionChoice {
 		{
 			Name: "Honkai Impact 3rd",
@@ -169,9 +177,9 @@ var (
 
 // Command arguments typedef
 type CMDArgsMap = map[string]*discordgo.ApplicationCommandInteractionDataOption
+
 func parseArgs(options []*discordgo.ApplicationCommandInteractionDataOption) (om CMDArgsMap) {
 	om = make(CMDArgsMap)
-	log.Println("Command options:")
 	for _, opt := range options {
 		log.Printf("%s=%v\n", opt.Name, opt)
 		om[opt.Name] = opt
@@ -222,11 +230,62 @@ func handleSubscribe(s *discordgo.Session, i *discordgo.InteractionCreate, opts 
 	}
 
 	err := db.CreateSubscription(channel, notifyAdd, notifyRem)
+	if err == nil {
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: "Successfully subscribed channel!",
+				Flags: discordgo.MessageFlagsEphemeral,
+			},
+		})
+		return
+	}
+
+	// duplicate? update instead
+	if strings.Contains(err.Error(), "Error 1062 (23000): Duplicate entry") {
+		err = db.UpdateSubscription(channel, notifyAdd, notifyRem)
+		if err != nil {
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: fmt.Sprintf("Error updating existing subscription: %v", err),
+					Flags: discordgo.MessageFlagsEphemeral,
+				},
+			})
+			return
+		} else {
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: "Updated existing subscription with provided settings (default otherwise).",
+					Flags: discordgo.MessageFlagsEphemeral,
+				},
+			})
+			return
+		}
+	}
+
+	// unknown error
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: fmt.Sprintf("Error trying to create subscription: %v", err),
+			Flags: discordgo.MessageFlagsEphemeral,
+		},
+	})
+}
+
+func handleUnsubscribe(s *discordgo.Session, i *discordgo.InteractionCreate, opts CMDArgsMap) {
+	channel, _ := strconv.ParseUint(i.ChannelID, 10, 64)
+	if val, exists := opts["channel"]; exists {
+		channel = val.UintValue()
+	}
+	err := db.RemoveSubscription(channel)
 	if err != nil {
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Content: fmt.Sprintf("Error trying to create subscription: %v", err),
+				Content: fmt.Sprintf("Error trying to unsubscribe: %v", err),
 				Flags: discordgo.MessageFlagsEphemeral,
 			},
 		})
@@ -234,7 +293,7 @@ func handleSubscribe(s *discordgo.Session, i *discordgo.InteractionCreate, opts 
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Content: "Successfully subscribed channel!",
+				Content: "Successfully unsubscribed channel!",
 				Flags: discordgo.MessageFlagsEphemeral,
 			},
 		})
@@ -279,6 +338,12 @@ func RunBot() {
 		log.Printf("%s ran %s\n", interactionAuthor(i.Interaction), data.Name)
 
 		options := parseArgs(data.Options)
+		if len(options) > 0 {
+			log.Println("Command options:")
+			for name, val := range options {
+				log.Printf("%s=%v\n", name, val)
+			}
+		}
 
 		// Command matching
 		switch data.Name {
@@ -286,14 +351,10 @@ func RunBot() {
 			handleEcho(s, i, options)
 		case "subscribe_channel":
 			handleSubscribe(s, i, options)
+		case "unsubscribe_channel":
+			handleUnsubscribe(s, i, options)
 		case "active_codes":
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: "command unimplemented",
-					Flags: discordgo.MessageFlagsEphemeral,
-				},
-			})
+			s.InteractionRespond(i.Interaction, &unimplementedResponse)
 		}
 
 	})
@@ -318,6 +379,6 @@ func RunBot() {
 	// close session gracefully
 	err = session.Close()
 	if err != nil {
-		log.Printf("could not close session gracefully: %s", err)
+		log.Printf("could not close session gracefully: %v", err)
 	}
 }
