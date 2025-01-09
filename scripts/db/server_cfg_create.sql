@@ -1,7 +1,4 @@
-DROP TABLE IF EXISTS SubscriptionGames;
-DROP TABLE IF EXISTS SubscriptionPingRoles;
-DROP TABLE IF EXISTS Subscriptions;
-DROP TABLE IF EXISTS Embeds;
+USE server_cfg;
 
 CREATE TABLE `Subscriptions` (
   `channel_id` BIGINT UNSIGNED PRIMARY KEY,
@@ -10,8 +7,9 @@ CREATE TABLE `Subscriptions` (
 );
 
 CREATE TABLE `SubscriptionGames` (
-  `channel_id` BIGINT UNSIGNED PRIMARY KEY,
-  `game` ENUM ('Honkai Impact', 'Genshin Impact', 'Honkai Star Rail', 'Zenless Zone Zero')
+  `channel_id` BIGINT UNSIGNED,
+  `game` ENUM ('Honkai Impact', 'Genshin Impact', 'Honkai Star Rail', 'Zenless Zone Zero'),
+  PRIMARY KEY (`channel_id`, `game`)
 );
 
 CREATE TABLE `SubscriptionPingRoles` (
@@ -26,7 +24,6 @@ CREATE TABLE `Embeds` (
   PRIMARY KEY (`message_id`, `game`)
 );
 
-ALTER TABLE `Subscriptions` ADD FOREIGN KEY (`channel_id`) REFERENCES `SubscriptionGames` (`channel_id`);
+ALTER TABLE `SubscriptionGames` ADD FOREIGN KEY (`channel_id`) REFERENCES `Subscriptions` (`channel_id`);
 
-ALTER TABLE `Subscriptions` ADD FOREIGN KEY (`channel_id`) REFERENCES `SubscriptionPingRoles` (`channel_id`);
-
+ALTER TABLE `SubscriptionPingRoles` ADD FOREIGN KEY (`channel_id`) REFERENCES `Subscriptions` (`channel_id`);
