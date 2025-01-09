@@ -11,8 +11,8 @@ type GuildAdmin struct {
 	RoleID uint64
 }
 
-func CreateSubscription(channelID uint64) error {
-	_, err := DBCfg.Exec("INSERT INTO Subscriptions VALUES (?)", channelID)
+func CreateSubscription(channelID uint64, additions bool, removals bool) error {
+	_, err := DBCfg.Exec("INSERT INTO Subscriptions VALUES (?, ?, ?)", channelID, additions, removals)
 	return err
 }
 

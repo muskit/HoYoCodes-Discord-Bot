@@ -1,13 +1,16 @@
 package bot
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
+	"github.com/muskit/hoyocodes-discord-bot/pkg/db"
 )
 
 var (
@@ -64,6 +67,7 @@ var (
 	adminCmdFlag int64 = discordgo.PermissionAdministrator
 
 	commands = []*discordgo.ApplicationCommand {
+		/// TEST ///
 		{
 			Name:        "echo",
 			Description: "Say something through the bot",
@@ -81,16 +85,16 @@ var (
 				},
 			},
 		},
-		/// CONFIGURATION COMMANDS ///
+		/// CHANNEL CONFIGURATION ///
 		{
 			Name: "subscribe_channel",
-			Description: "Subscribe this channel to code activity news. Tracks all games by default; use `/filter_games` to set.",
+			Description: "Subscribe this channel to code activity news. Tracks all games by default; use /filter_games to set.",
 			DefaultMemberPermissions: &adminCmdFlag,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
-					Name: "ping_role",
-					Description: "Role to ping when codes (for game if specified) have been updated.",
-					Type: discordgo.ApplicationCommandOptionRole,
+					Name: "channel",
+					Description: "Channel to create a subcription for. Default: the current channel.",
+					Type: discordgo.ApplicationCommandOptionChannel,
 					Required: false,
 				},
 				{
@@ -109,22 +113,52 @@ var (
 		},
 		{
 			Name: "filter_games",
-			Description: "Set games this channel should be subscribed to. Run command without games to subscribe to all.",
+			Description: "Set games this channel should be subscribed to. Not specifying games will subscribe to all.",
 			DefaultMemberPermissions: &adminCmdFlag,
-			Options: optionalGameChoices,
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Name: "channel",
+					Description: "Channel to configure subscribed games for. Default: current channel.",
+					Type: discordgo.ApplicationCommandOptionChannel,
+					Required: false,
+				},
+				optionalGameChoices[0],
+				optionalGameChoices[1],
+				optionalGameChoices[2],
+				optionalGameChoices[3],
+			},
 		},
 		{
 			Name: "unsubscribe_channel",
-			Description: "Unsubscribe a channel from all code announcements.",
+			Description: "Unsubscribe a channel from all code announcements. Will leave channel configuration alone.",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Name: "channel",
+					Description: "Channel to unsubscribe. Default: current channel.",
+					Type: discordgo.ApplicationCommandOptionChannel,
+					Required: false,
+				},
+			},
 			DefaultMemberPermissions: &adminCmdFlag,
 		},
 		{
 			Name: "create_embed",
 			Description: "Create an embed that updates with active codes. Shows all MiHoYo games if none are specified.",
 			DefaultMemberPermissions: &adminCmdFlag,
-			Options: optionalGameChoices,
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Name: "channel",
+					Description: "Channel to create the embed. Default: current channel.",
+					Type: discordgo.ApplicationCommandOptionChannel,
+					Required: false,
+				},
+				optionalGameChoices[0],
+				optionalGameChoices[1],
+				optionalGameChoices[2],
+				optionalGameChoices[3],
+			},
 		},
-		/// ON-DEMAND RUN COMMANDS ///
+		/// MISC ///
 		{
 			Name: "active_codes",
 			Description: "Check the current active codes for MiHoYo games. Shows all games if none are specified.",
@@ -137,8 +171,9 @@ var (
 type CMDArgsMap = map[string]*discordgo.ApplicationCommandInteractionDataOption
 func parseArgs(options []*discordgo.ApplicationCommandInteractionDataOption) (om CMDArgsMap) {
 	om = make(CMDArgsMap)
+	log.Println("Command options:")
 	for _, opt := range options {
-		log.Printf("%s = %v\n", opt.Name, opt)
+		log.Printf("%s=%v\n", opt.Name, opt)
 		om[opt.Name] = opt
 	}
 	return
@@ -171,6 +206,41 @@ func handleEcho(s *discordgo.Session, i *discordgo.InteractionCreate, opts CMDAr
 	}
 }
 
+func handleSubscribe(s *discordgo.Session, i *discordgo.InteractionCreate, opts CMDArgsMap) {
+	channel, _ := strconv.ParseUint(i.ChannelID, 10, 64)
+	notifyAdd := true
+	notifyRem := false
+
+	if val, exists := opts["channel"]; exists {
+		channel = val.UintValue()
+	}
+	if val, exists := opts["announce_code_additions"]; exists {
+		notifyAdd = val.BoolValue()
+	}
+	if val, exists := opts["announce_code_removals"]; exists {
+		notifyRem = val.BoolValue()
+	}
+
+	err := db.CreateSubscription(channel, notifyAdd, notifyRem)
+	if err != nil {
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: fmt.Sprintf("Error trying to create subscription: %v", err),
+				Flags: discordgo.MessageFlagsEphemeral,
+			},
+		})
+	} else {
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: "Successfully subscribed channel!",
+				Flags: discordgo.MessageFlagsEphemeral,
+			},
+		})
+	}
+}
+
 func RunBot() {
 	log.Println("Starting bot...")
 	// read env
@@ -190,9 +260,10 @@ func RunBot() {
 	}
 
 	// register commands
-	_, err = session.ApplicationCommandBulkOverwrite(appId, "", commands)
-	if err != nil {
-		log.Fatalf("could not register commands: %s", err)
+	if _, err = session.ApplicationCommandBulkOverwrite(appId, "", commands); err != nil {
+		log.Fatalf("Could not register commands: %s\n", err)
+	} else {
+		log.Println("Successfully registered commands!")
 	}
 
 	// EVENT HANDLERS //
@@ -213,8 +284,16 @@ func RunBot() {
 		switch data.Name {
 		case "echo":
 			handleEcho(s, i, options)
+		case "subscribe_channel":
+			handleSubscribe(s, i, options)
 		case "active_codes":
-			
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: "command unimplemented",
+					Flags: discordgo.MessageFlagsEphemeral,
+				},
+			})
 		}
 
 	})
