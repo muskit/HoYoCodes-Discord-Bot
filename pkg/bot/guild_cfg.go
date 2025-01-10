@@ -15,14 +15,6 @@ func HandleSubscribe(s *discordgo.Session, i *discordgo.InteractionCreate, opts 
 	channelID := GetChannel(i, opts)
 	guildID, _ := strconv.ParseUint(i.GuildID, 10, 64)
 
-	// check if channel is subscribed
-	if _, err := db.GetSubscription(channelID); err != nil {
-		if err == sql.ErrNoRows {
-			RespondPrivate(s, i, fmt.Sprintf("Please subscribe <#%v> first before running this command.", channelID))
-			return
-		}
-	} 
-
 	notifyAdd := true
 	notifyRem := false
 
@@ -117,8 +109,20 @@ func HandleFilterGames(s *discordgo.Session, i *discordgo.InteractionCreate, opt
 
 func HandleAddPingRole(s *discordgo.Session, i *discordgo.InteractionCreate, opts CMDArgsMap) {
 	channelID := GetChannel(i, opts)
-	roleID, _ := strconv.ParseUint(opts["role"].RoleValue(nil, "").ID, 10, 64)
 
+	// check if channel is subscribed
+	if _, err := db.GetSubscription(channelID); err != nil {
+		if err == sql.ErrNoRows {
+			RespondPrivate(s, i, fmt.Sprintf("Please subscribe <#%v> first before running this command.", channelID))
+			return
+		}
+
+		// unknown error
+		RespondPrivate(s, i, fmt.Sprintf("Error checking subscription for <#%v>: %v", channelID, err))
+		return
+	} 
+
+	roleID, _ := strconv.ParseUint(opts["role"].RoleValue(nil, "").ID, 10, 64)
 	err := db.AddPingRole(channelID, roleID)
 	if err != nil && !db.IsDuplicateErr(err) {
 		RespondPrivate(s, i, fmt.Sprintf("Error adding ping role for <@&%v> in <#%v>: %v", roleID, channelID, err))
@@ -129,8 +133,20 @@ func HandleAddPingRole(s *discordgo.Session, i *discordgo.InteractionCreate, opt
 
 func HandleRemovePingRole(s *discordgo.Session, i *discordgo.InteractionCreate, opts CMDArgsMap) {
 	channelID := GetChannel(i, opts)
-	roleID, _ := strconv.ParseUint(opts["role"].RoleValue(nil, "").ID, 10, 64)
 
+	// check if channel is subscribed
+	if _, err := db.GetSubscription(channelID); err != nil {
+		if err == sql.ErrNoRows {
+			RespondPrivate(s, i, fmt.Sprintf("Please subscribe <#%v> first before running this command.", channelID))
+			return
+		}
+
+		// unknown error
+		RespondPrivate(s, i, fmt.Sprintf("Error checking subscription for <#%v>: %v", channelID, err))
+		return
+	} 
+
+	roleID, _ := strconv.ParseUint(opts["role"].RoleValue(nil, "").ID, 10, 64)
 	err := db.RemovePingRole(channelID, roleID)
 	if err != nil  {
 		RespondPrivate(s, i, fmt.Sprintf("Error removing ping role <@&%v> from <#%v>: %v", roleID, channelID, err))
@@ -145,15 +161,15 @@ func HandleShowConfig(s *discordgo.Session, i *discordgo.InteractionCreate, opts
 		"**Active:** %v\n"+
 		"**Ping on additions:** %v\n"+
 		"**Ping on removals:** %v\n"+
-		"**Games:**\n"+
-		"%v\n" + 
+		"**Game filter:**\n"+
+		"%v" + 
 		"**Roles to ping:\n**"+
 		"%v")
 
 	channelID := GetChannel(i, opts)
 	info, err := db.GetSubscription(channelID)
 
-	// check if channel is subscribed
+	// stop if channel was never subscribed
 	if err != nil {
 		if err == sql.ErrNoRows {
 			RespondPrivate(s, i, fmt.Sprintf("No data available for <#%v>! This channel was never subscribed.", channelID))
@@ -174,7 +190,6 @@ func HandleShowConfig(s *discordgo.Session, i *discordgo.InteractionCreate, opts
 	for _, g := range games {
 		gameStr += fmt.Sprintf("- %v\n", g)
 	}
-	gameStr = strings.Trim(gameStr, " \n")
 
 	// get ping roles
 	roleStr := ""

@@ -11,7 +11,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-const connStrCfg = "%s:%s@tcp(%s:%s)/server_cfg"
+const connStrCfg = "%s:%s@tcp(%s:%s)/guild_cfg"
 const connStrCodes = "%s:%s@tcp(%s:%s)/codes"
 
 var DBCfg *sql.DB

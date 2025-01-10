@@ -1,5 +1,5 @@
-# for MariaDB/MySQL
-USE server_cfg;
+CREATE DATABASE IF NOT EXISTS guild_cfg;
+USE guild_cfg;
 
 CREATE TABLE `Subscriptions` (
   `channel_id` BIGINT UNSIGNED PRIMARY KEY,
@@ -29,6 +29,6 @@ CREATE TABLE `Embeds` (
 
 CREATE INDEX `subscription_guild_index` ON `Subscriptions` (`guild_id`);
 
-ALTER TABLE `SubscriptionGames` ADD FOREIGN KEY (`channel_id`) REFERENCES `Subscriptions` (`channel_id`);
+ALTER TABLE `SubscriptionGames` ADD FOREIGN KEY (`channel_id`) REFERENCES `Subscriptions` (`channel_id`) ON DELETE CASCADE;
 
-ALTER TABLE `SubscriptionPingRoles` ADD FOREIGN KEY (`channel_id`) REFERENCES `Subscriptions` (`channel_id`);
+ALTER TABLE `SubscriptionPingRoles` ADD FOREIGN KEY (`channel_id`) REFERENCES `Subscriptions` (`channel_id`) ON DELETE CASCADE;
