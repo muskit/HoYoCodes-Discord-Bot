@@ -8,11 +8,6 @@ import (
 	"github.com/hashicorp/go-set/v3"
 )
 
-type GuildAdmin struct {
-	GuildID uint64
-	RoleID uint64
-}
-
 func CreateSubscription(channelID uint64, additions bool, removals bool) error {
 	_, err := DBCfg.Exec("INSERT INTO Subscriptions VALUES (?, ?, ?)", channelID, additions, removals)
 	return err
@@ -43,6 +38,11 @@ func SetGameFilters(channelID uint64, games *set.Set[string]) error {
 }
 
 //// REMOVE ////
+type GuildAdmin struct {
+	GuildID uint64
+	RoleID uint64
+}
+
 func AddGuildAdmin(guildID uint64, roleID uint64) error {
 	// TODO: handle duplicate
 	_, err := DBCfg.Exec("INSERT INTO GuildAdmins VALUES (?, ?)", guildID, roleID)
