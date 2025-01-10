@@ -90,12 +90,6 @@ var (
 			DefaultMemberPermissions: &adminCmdFlag,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
-					Name: "channel",
-					Description: "Channel to create a subcription for. Default: the current channel.",
-					Type: discordgo.ApplicationCommandOptionChannel,
-					Required: false,
-				},
-				{
 					Name: "announce_code_additions",
 					Description: "Determines if bot should announce codes being added. Default: `true`",
 					Type: discordgo.ApplicationCommandOptionBoolean,
@@ -107,6 +101,12 @@ var (
 					Type: discordgo.ApplicationCommandOptionBoolean,
 					Required: false,
 				},
+				{
+					Name: "channel",
+					Description: "Channel to create a subcription for. Default: the current channel.",
+					Type: discordgo.ApplicationCommandOptionChannel,
+					Required: false,
+				},
 			},
 		},
 		{
@@ -114,16 +114,16 @@ var (
 			Description: "Set games this channel should be subscribed to. Not specifying games will subscribe to all.",
 			DefaultMemberPermissions: &adminCmdFlag,
 			Options: []*discordgo.ApplicationCommandOption{
+				optionalGameChoices[0],
+				optionalGameChoices[1],
+				optionalGameChoices[2],
+				optionalGameChoices[3],
 				{
 					Name: "channel",
 					Description: "Channel to configure subscribed games for. Default: current channel.",
 					Type: discordgo.ApplicationCommandOptionChannel,
 					Required: false,
 				},
-				optionalGameChoices[0],
-				optionalGameChoices[1],
-				optionalGameChoices[2],
-				optionalGameChoices[3],
 			},
 		},
 		{
@@ -140,26 +140,68 @@ var (
 			DefaultMemberPermissions: &adminCmdFlag,
 		},
 		{
+			Name: "add_ping_role",
+			Description: "Adds a role that will be pinged.",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Name: "role",
+					Description: "Role to ping.",
+					Type: discordgo.ApplicationCommandOptionRole,
+					Required: true,
+				},
+				{
+					Name: "channel",
+					Description: "Channel to add a ping role for. Default: current channel.",
+					Type: discordgo.ApplicationCommandOptionChannel,
+					Required: false,
+				},
+			},
+		},
+		{
+			Name: "remove_ping_role",
+			Description: "Remove a role from being pinged.",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Name: "role",
+					Description: "Role to remove from being pinged.",
+					Type: discordgo.ApplicationCommandOptionRole,
+					Required: true,
+				},
+				{
+					Name: "channel",
+					Description: "Channel to remove a ping role from. Default: current channel.",
+					Type: discordgo.ApplicationCommandOptionChannel,
+					Required: false,
+				},
+			},
+		},
+		{
 			Name: "create_embed",
 			Description: "Create an embed that self-updates with active codes. Shows all games if none are specified.",
 			DefaultMemberPermissions: &adminCmdFlag,
 			Options: []*discordgo.ApplicationCommandOption{
+				optionalGameChoices[0],
+				optionalGameChoices[1],
+				optionalGameChoices[2],
+				optionalGameChoices[3],
 				{
 					Name: "channel",
 					Description: "Channel to create the embed. Default: current channel.",
 					Type: discordgo.ApplicationCommandOptionChannel,
 					Required: false,
 				},
-				optionalGameChoices[0],
-				optionalGameChoices[1],
-				optionalGameChoices[2],
-				optionalGameChoices[3],
 			},
 		},
 		{
 			Name: "show_config",
 			Description: "Show subscription configuration for a channel.",
 			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Name: "all_channels",
+					Description: "Whether to show config for all channels in this server or not. Default: false",
+					Type: discordgo.ApplicationCommandOptionChannel,
+					Required: false,
+				},
 				{
 					Name: "channel",
 					Description: "Channel to show config for. Default: current channel.",
@@ -209,7 +251,7 @@ func interactionAuthor(i *discordgo.Interaction) *discordgo.User {
 func GetChannel(i *discordgo.InteractionCreate, opts CMDArgsMap) uint64 {
 	channel, _ := strconv.ParseUint(i.ChannelID, 10, 64)
 	if val, exists := opts["channel"]; exists {
-		channel, _ = strconv.ParseUint(val.StringValue(), 10, 64)
+		channel, _ = strconv.ParseUint(val.ChannelValue(nil).ID, 10, 64)
 	}
 	return channel
 }
@@ -287,10 +329,10 @@ func RunBot() {
 		data := i.ApplicationCommandData()
 		log.Printf("%s ran %s\n", interactionAuthor(i.Interaction), data.Name)
 
-		options := parseArgs(data.Options)
-		if len(options) > 0 {
+		o := parseArgs(data.Options)
+		if len(o) > 0 {
 			log.Println("Command options:")
-			for name, val := range options {
+			for name, val := range o {
 				log.Printf("%s=%v\n", name, val)
 			}
 		}
@@ -298,13 +340,19 @@ func RunBot() {
 		// Command matching
 		switch data.Name {
 		case "echo":
-			handleEcho(s, i, options)
+			handleEcho(s, i, o)
 		case "subscribe_channel":
-			HandleSubscribe(s, i, options)
+			HandleSubscribe(s, i, o)
 		case "unsubscribe_channel":
-			HandleUnsubscribe(s, i, options)
+			HandleUnsubscribe(s, i, o)
 		case "filter_games":
-			HandleFilterGames(s, i, options)
+			HandleFilterGames(s, i, o)
+		case "show_config":
+			HandleShowConfig(s, i, o)
+		case "add_ping_role":
+			HandleAddPingRole(s, i, o)
+		case "remove_ping_role":
+			HandleRemovePingRole(s, i, o)
 		default:
 			RespondPrivate(s, i, "command unimplemented")
 		}

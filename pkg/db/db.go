@@ -17,7 +17,7 @@ const connStrCodes = "%s:%s@tcp(%s:%s)/codes"
 var DBCfg *sql.DB
 var DBCodes *sql.DB
 
-func IsDuplicateKey(err error) bool {
+func IsDuplicateErr(err error) bool {
 	return strings.Contains(err.Error(), "Error 1062 (23000): Duplicate entry")
 }
 

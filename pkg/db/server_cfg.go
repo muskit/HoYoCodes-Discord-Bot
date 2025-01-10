@@ -8,19 +8,72 @@ import (
 	"github.com/hashicorp/go-set/v3"
 )
 
-func CreateSubscription(channelID uint64, additions bool, removals bool) error {
-	_, err := DBCfg.Exec("INSERT INTO Subscriptions VALUES (?, ?, ?)", channelID, additions, removals)
+type Subscription struct {
+	ChannelID uint64
+	Active bool
+	PingOnAdds bool
+	PingOnRems bool
+}
+
+func CreateSubscription(channelID uint64, guildID uint64, additions bool, removals bool) error {
+	_, err := DBCfg.Exec("INSERT INTO Subscriptions SET channel_id = ?, guild_id = ?, ping_on_code_add = ?, ping_on_code_remove = ?", channelID, guildID, additions, removals)
 	return err
 }
 
 func UpdateSubscription(channelID uint64, additions bool, removals bool) error {
-	_, err := DBCfg.Exec("UPDATE Subscriptions SET ping_on_code_add = ?, ping_on_code_remove = ? WHERE channel_id = ?", additions, removals, channelID)
+	_, err := DBCfg.Exec("UPDATE Subscriptions SET ping_on_code_add = ?, ping_on_code_remove = ?, active = true WHERE channel_id = ?", additions, removals, channelID)
 	return err
 }
 
-func RemoveSubscription(channelID uint64) error {
-	_, err := DBCfg.Exec("DELETE FROM Subscriptions WHERE channel_id = ?", channelID)
+func DeactivateSubscription(channelID uint64) error {
+	// _, err := DBCfg.Exec("DELETE FROM Subscriptions WHERE channel_id = ?", channelID)
+	_, err := DBCfg.Exec("UPDATE Subscriptions SET active = false WHERE channel_id = ?", channelID)
 	return err
+}
+
+func GetSubscription(channelID uint64) (*Subscription, error) {
+	var pingOnAdd bool
+	var pingOnRem bool
+	var active bool
+	s := DBCfg.QueryRow("SELECT ping_on_code_add, ping_on_code_remove, active FROM Subscriptions WHERE channel_id = ?", channelID)
+	if err := s.Scan(&pingOnAdd, &pingOnRem, &active); err != nil {
+		return nil, err
+	}
+
+	return &Subscription{
+		ChannelID: channelID,
+		Active: active,
+		PingOnAdds: pingOnAdd,
+		PingOnRems: pingOnRem,
+	}, nil
+}
+
+func AddPingRole(channelID uint64, pingRole uint64) error {
+	_, err := DBCfg.Exec("INSERT INTO SubscriptionPingRoles SET channel_id = ?, role_id = ?", channelID, pingRole)
+	return err
+}
+
+func RemovePingRole(channelID uint64, pingRole uint64) error {
+	_, err := DBCfg.Exec("DELETE FROM SubscriptionPingRoles WHERE channel_id = ? AND role_id = ?", channelID, pingRole)
+	return err
+}
+
+func GetPingRoles(channelID uint64) ([]uint64, error) {
+	rows, err := DBCfg.Query("SELECT role_id FROM SubscriptionPingRoles WHERE channel_id = ?", channelID)
+	if err != nil {
+		return nil, err
+	}
+
+	results := []uint64{}
+	var val uint64
+	for rows.Next() {
+		if rows.Err() != nil {
+			return results, err
+		}
+		rows.Scan(&val)
+		results = append(results, val)
+	}
+	return results, nil
 }
 
 func SetGameFilters(channelID uint64, games *set.Set[string]) error {
@@ -30,11 +83,29 @@ func SetGameFilters(channelID uint64, games *set.Set[string]) error {
 	
 	for _, game := range games.Slice() {
 		_, err := DBCfg.Exec("INSERT INTO SubscriptionGames VALUES (?, ?)", channelID, game)
-		if err != nil && !IsDuplicateKey(err) {
+		if err != nil && !IsDuplicateErr(err) {
 			return err
 		}
 	}
 	return nil
+}
+
+func GetSubscriptionGames(channelID uint64) ([]string, error) {
+	rows, err := DBCfg.Query("SELECT game FROM SubscriptionGames WHERE channel_id = ?", channelID)
+	if err != nil {
+		return nil, err
+	}
+
+	results := []string{}
+	var val string
+	for rows.Next() {
+		if rows.Err() != nil {
+			return results, err
+		}
+		rows.Scan(&val)
+		results = append(results, val)
+	}
+	return results, nil
 }
 
 //// REMOVE ////
