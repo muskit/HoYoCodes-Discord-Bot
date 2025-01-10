@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+
+	"github.com/hashicorp/go-set/v3"
 )
 
 type GuildAdmin struct {
@@ -24,6 +26,20 @@ func UpdateSubscription(channelID uint64, additions bool, removals bool) error {
 func RemoveSubscription(channelID uint64) error {
 	_, err := DBCfg.Exec("DELETE FROM Subscriptions WHERE channel_id = ?", channelID)
 	return err
+}
+
+func SetGameFilters(channelID uint64, games *set.Set[string]) error {
+	if _, err := DBCfg.Exec("DELETE FROM SubscriptionGames WHERE channel_id = ?", channelID); err != nil {
+		return err
+	}
+	
+	for _, game := range games.Slice() {
+		_, err := DBCfg.Exec("INSERT INTO SubscriptionGames VALUES (?, ?)", channelID, game)
+		if err != nil && !IsDuplicateKey(err) {
+			return err
+		}
+	}
+	return nil
 }
 
 //// REMOVE ////

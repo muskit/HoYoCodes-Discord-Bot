@@ -1,11 +1,14 @@
 module github.com/muskit/hoyocodes-discord-bot
 
-go 1.22.5
+go 1.23
+
+toolchain go1.23.4
 
 require (
 	github.com/bwmarrin/discordgo v0.28.1
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/gocolly/colly v1.2.0
+	github.com/hashicorp/go-set/v3 v3.0.0
 	github.com/joho/godotenv v1.5.1
 	modernc.org/sqlite v1.34.4
 )
@@ -21,7 +24,6 @@ require (
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect

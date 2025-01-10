@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
@@ -15,6 +16,10 @@ const connStrCodes = "%s:%s@tcp(%s:%s)/codes"
 
 var DBCfg *sql.DB
 var DBCodes *sql.DB
+
+func IsDuplicateKey(err error) bool {
+	return strings.Contains(err.Error(), "Error 1062 (23000): Duplicate entry")
+}
 
 func init() {
 	log.Println("initializing db...")

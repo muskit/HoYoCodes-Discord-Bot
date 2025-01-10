@@ -2,21 +2,17 @@ package bot
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/hashicorp/go-set/v3"
 	"github.com/muskit/hoyocodes-discord-bot/pkg/db"
 )
 
 func HandleSubscribe(s *discordgo.Session, i *discordgo.InteractionCreate, opts CMDArgsMap) {
-	channel, _ := strconv.ParseUint(i.ChannelID, 10, 64)
+	channel := GetChannel(i, opts)
 	notifyAdd := true
 	notifyRem := false
 
-	if val, exists := opts["channel"]; exists {
-		channel, _ = strconv.ParseUint(val.ChannelValue(nil).ID, 10, 64)
-	}
 	if val, exists := opts["announce_code_additions"]; exists {
 		notifyAdd = val.BoolValue()
 	}
@@ -26,75 +22,58 @@ func HandleSubscribe(s *discordgo.Session, i *discordgo.InteractionCreate, opts 
 
 	err := db.CreateSubscription(channel, notifyAdd, notifyRem)
 	if err == nil {
-		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: fmt.Sprintf("Successfully subscribed <#%v>!", channel),
-				Flags: discordgo.MessageFlagsEphemeral,
-			},
-		})
+		RespondPrivate(s, i, fmt.Sprintf("Successfully subscribed <#%v>!", channel))
 		return
 	}
 
 	// duplicate? update instead
-	if strings.Contains(err.Error(), "Error 1062 (23000): Duplicate entry") {
+	if db.IsDuplicateKey(err) {
 		err = db.UpdateSubscription(channel, notifyAdd, notifyRem)
 		if err != nil {
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: fmt.Sprintf("Error updating existing subscription for <#%v>: %v", channel, err),
-					Flags: discordgo.MessageFlagsEphemeral,
-				},
-			})
+			RespondPrivate(s, i, fmt.Sprintf("Error updating existing subscription for <#%v>: %v", channel, err))
 			return
 		} else {
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: fmt.Sprintf("Updated existing subscription for <#%v> with provided settings (default otherwise).", channel),
-					Flags: discordgo.MessageFlagsEphemeral,
-				},
-			})
+			RespondPrivate(s, i, fmt.Sprintf("Updated existing subscription for <#%v> with provided settings (default otherwise)", channel))
 			return
 		}
 	}
 
 	// unknown error
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: fmt.Sprintf("Error trying to create subscription for <#%v>: %v", channel, err),
-			Flags: discordgo.MessageFlagsEphemeral,
-		},
-	})
+	RespondPrivate(s, i, fmt.Sprintf("Error trying to create subscription for <#%v>: %v", channel, err))
 }
 
 func HandleUnsubscribe(s *discordgo.Session, i *discordgo.InteractionCreate, opts CMDArgsMap) {
-	channel, _ := strconv.ParseUint(i.ChannelID, 10, 64)
-	if val, exists := opts["channel"]; exists {
-		channel, _ = strconv.ParseUint(val.StringValue(), 10, 64)
-	}
+	channel := GetChannel(i, opts)
+
 	err := db.RemoveSubscription(channel)
 	if err != nil {
-		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: fmt.Sprintf("Error trying to unsubscribe: <#%v>", err),
-				Flags: discordgo.MessageFlagsEphemeral,
-			},
-		})
+		RespondPrivate(s, i, fmt.Sprintf("Error trying to unsubscribe: <#%v>", err))
 	} else {
-		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: "Successfully unsubscribed channel!",
-				Flags: discordgo.MessageFlagsEphemeral,
-			},
-		})
+		RespondPrivate(s, i, "Successfully unsubscribed channel!")
 	}
 }
 
-func HandleFilterGames(channelID uint64, game []string) {
+func HandleFilterGames(s *discordgo.Session, i *discordgo.InteractionCreate, opts CMDArgsMap) {
+	channelID := GetChannel(i, opts)
 
+	games := set.New[string](4)
+	if val, exists := opts["game_1"]; exists {
+		games.Insert(val.StringValue())
+	}
+	if val, exists := opts["game_2"]; exists {
+		games.Insert(val.StringValue())
+	}
+	if val, exists := opts["game_3"]; exists {
+		games.Insert(val.StringValue())
+	}
+	if val, exists := opts["game_4"]; exists {
+		games.Insert(val.StringValue())
+	}
+
+	err := db.SetGameFilters(channelID, games)
+	if err != nil {
+		RespondPrivate(s, i, fmt.Sprintf("Error setting game filters for <#%v>: %v", channelID, err))
+		return
+	}
+	RespondPrivate(s, i, fmt.Sprintf("Successfully set game filters for <#%v>!", channelID))
 }

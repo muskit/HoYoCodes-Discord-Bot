@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -11,14 +12,6 @@ import (
 )
 
 var (
-	unimplementedResponse discordgo.InteractionResponse = discordgo.InteractionResponse {
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: "command unimplemented",
-			Flags: discordgo.MessageFlagsEphemeral,
-		},
-	}
-
 	gameChoices = []*discordgo.ApplicationCommandOptionChoice {
 		{
 			Name: "Honkai Impact 3rd",
@@ -148,7 +141,7 @@ var (
 		},
 		{
 			Name: "create_embed",
-			Description: "Create an embed that updates with active codes. Shows all MiHoYo games if none are specified.",
+			Description: "Create an embed that self-updates with active codes. Shows all games if none are specified.",
 			DefaultMemberPermissions: &adminCmdFlag,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
@@ -163,11 +156,34 @@ var (
 				optionalGameChoices[3],
 			},
 		},
+		{
+			Name: "show_config",
+			Description: "Show subscription configuration for a channel.",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Name: "channel",
+					Description: "Channel to show config for. Default: current channel.",
+					Type: discordgo.ApplicationCommandOptionChannel,
+					Required: false,
+				},
+			},
+		},
 		/// MISC ///
 		{
 			Name: "active_codes",
 			Description: "Check the current active codes for MiHoYo games. Shows all games if none are specified.",
-			Options: optionalGameChoices,
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Name: "recents_only",
+					Description: "Show only codes that have been released recently. Default: true",
+					Type: discordgo.ApplicationCommandOptionBoolean,
+					Required: false,
+				},
+				optionalGameChoices[0],
+				optionalGameChoices[1],
+				optionalGameChoices[2],
+				optionalGameChoices[3],
+			},
 		},
 	}
 )
@@ -190,6 +206,39 @@ func interactionAuthor(i *discordgo.Interaction) *discordgo.User {
 	return i.User
 }
 
+func GetChannel(i *discordgo.InteractionCreate, opts CMDArgsMap) uint64 {
+	channel, _ := strconv.ParseUint(i.ChannelID, 10, 64)
+	if val, exists := opts["channel"]; exists {
+		channel, _ = strconv.ParseUint(val.StringValue(), 10, 64)
+	}
+	return channel
+}
+
+func Respond(s *discordgo.Session, i *discordgo.InteractionCreate, str string) {
+	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: str,
+		},
+	})
+	if err != nil {
+		log.Panicf("could not respond to interaction: %s", err)
+	}
+}
+
+func RespondPrivate(s *discordgo.Session, i *discordgo.InteractionCreate, str string) {
+	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: str,
+			Flags: discordgo.MessageFlagsEphemeral,
+		},
+	})
+	if err != nil {
+		log.Panicf("could not respond to interaction: %s", err)
+	}
+}
+
 // EXAMPLE: echo cmd handler
 func handleEcho(s *discordgo.Session, i *discordgo.InteractionCreate, opts CMDArgsMap) {
 	builder := new(strings.Builder)
@@ -198,19 +247,8 @@ func handleEcho(s *discordgo.Session, i *discordgo.InteractionCreate, opts CMDAr
 	builder.WriteString("**" + author.String() + "** says: ")
 	builder.WriteString(opts["message"].StringValue())
 
-	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: builder.String(),
-			Flags: discordgo.MessageFlagsEphemeral,
-		},
-	})
-
-	if err != nil {
-		log.Panicf("could not respond to interaction: %s", err)
-	}
+	RespondPrivate(s, i, builder.String())
 }
-
 
 func RunBot() {
 	log.Println("Starting bot...")
@@ -265,8 +303,10 @@ func RunBot() {
 			HandleSubscribe(s, i, options)
 		case "unsubscribe_channel":
 			HandleUnsubscribe(s, i, options)
-		case "active_codes":
-			s.InteractionRespond(i.Interaction, &unimplementedResponse)
+		case "filter_games":
+			HandleFilterGames(s, i, options)
+		default:
+			RespondPrivate(s, i, "command unimplemented")
 		}
 
 	})
