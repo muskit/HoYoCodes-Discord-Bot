@@ -24,6 +24,7 @@ CREATE TABLE `SubscriptionPingRoles` (
 CREATE TABLE `Embeds` (
   `message_id` BIGINT UNSIGNED,
   `game` ENUM ('Honkai Impact 3rd', 'Genshin Impact', 'Honkai Star Rail', 'Zenless Zone Zero') COMMENT 'If null, notify for all games and ensure message_id is unique in table.',
+  `channel_id` BIGINT UNSIGNED,
   PRIMARY KEY (`message_id`, `game`)
 );
 
