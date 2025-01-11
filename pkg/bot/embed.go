@@ -162,6 +162,24 @@ func HandleCreateEmbed(s *discordgo.Session, i *discordgo.InteractionCreate, opt
 	RespondPrivate(s, i, fmt.Sprintf("Successfully created embed in <#%v> for %v!", channelID, game))
 }
 
+func HandleDeleteEmbed(s *discordgo.Session, i *discordgo.InteractionCreate, opts CmdOptMap) {
+	channelID := strconv.FormatUint(GetChannelID(i, opts), 10)
+	messageID := opts["message"].StringValue()
+
+	if err := s.ChannelMessageDelete(channelID, messageID); err != nil {
+		RespondPrivate(s, i, fmt.Sprintf("Error deleting message: %v", err))
+		return
+	}
+
+	// remove message from DB
+	_, err := db.DBCfg.Exec("DELETE FROM Embeds WHERE message_id = ?", messageID)
+	if err != nil {
+		RespondPrivate(s, i, fmt.Sprintf("Error removing embed from tracking: %v", err))
+		return
+	}
+	RespondPrivate(s, i, "Embed successfully removed!")
+}
+
 func UpdateEmbed(messageID uint64, channelID uint64, game string) {
 
 

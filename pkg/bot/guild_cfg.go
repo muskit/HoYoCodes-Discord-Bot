@@ -192,22 +192,24 @@ func getConfigPrint(sub *db.Subscription) string {
 }
 
 func HandleShowConfig(s *discordgo.Session, i *discordgo.InteractionCreate, opts CmdOptMap) {
-	if allChan := opts["all_channels"]; allChan != nil && allChan.BoolValue() {
-		guildID, _ := strconv.ParseUint(i.GuildID, 10, 64)
-		
-		// get channels of server
-		channels, err := db.GetSubscriptionsFromGuild(guildID)
-		if err != nil {
-			RespondPrivate(s, i, fmt.Sprintf("Error trying to get server channels: %v", err))
+	if i.GuildID != "" { // don't run in DM environment
+		if allChan := opts["all_channels"]; allChan != nil && allChan.BoolValue() {
+			guildID, _ := strconv.ParseUint(i.GuildID, 10, 64)
+			
+			// get channels of server
+			channels, err := db.GetSubscriptionsFromGuild(guildID)
+			if err != nil {
+				RespondPrivate(s, i, fmt.Sprintf("Error trying to get server channels: %v", err))
+				return
+			}
+			
+			result := fmt.Sprintf("**Configuration for server ID %v**\n", i.GuildID)
+			for _, ch := range channels {
+				result += getConfigPrint(&ch) + "\n"
+			}
+			RespondPrivate(s, i, result)
 			return
 		}
-		
-		result := ""
-		for _, ch := range channels {
-			result += getConfigPrint(&ch) + "\n"
-		}
-		RespondPrivate(s, i, result)
-		return
 	}
 
 	channelID := GetChannelID(i, opts)

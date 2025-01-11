@@ -201,6 +201,24 @@ var (
 			},
 		},
 		{
+			Name: "delete_embed",
+			Description: "Delete a self-updating embed.",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Name: "message",
+					Description: "Message ID containing the embed.",
+					Type: discordgo.ApplicationCommandOptionString,
+					Required: true,
+				},
+				{
+					Name: "channel",
+					Description: "Channel where message resides. Must match, otherwise command will fail! Default: current channel",
+					Type: discordgo.ApplicationCommandOptionNumber,
+					Required: false,
+				},
+			},
+		},
+		{
 			Name: "show_config",
 			Description: "Show subscription configuration for a channel.",
 			Options: []*discordgo.ApplicationCommandOption{
@@ -363,6 +381,8 @@ func RunBot() {
 			HandleRemovePingRole(s, i, opts)
 		case "create_embed":
 			HandleCreateEmbed(s, i, opts)
+		case "delete_embed":
+			HandleDeleteEmbed(s, i, opts)
 		default:
 			log.Printf("WARNING: tried to run an unimplemented command %v!!\n", data.Name)
 			if len(opts) > 0 {
@@ -387,6 +407,12 @@ func RunBot() {
 	if err != nil {
 		log.Fatalf("could not open session: %s", err)
 	}
+
+	// testing
+	// var channel_id uint64
+	// sel := db.DBCfg.QueryRow("SELECT channel_id FROM Subscriptions WHERE guild_id = 0")
+	// sel.Scan(&channel_id)
+	// session.ChannelMessageSend(strconv.FormatUint(channel_id, 10), "hello dm!")
 
 	// wait for interrupt
 	sigch := make(chan os.Signal, 1)
