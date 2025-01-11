@@ -155,7 +155,7 @@ func HandleRemovePingRole(s *discordgo.Session, i *discordgo.InteractionCreate, 
 	RespondPrivate(s, i, fmt.Sprintf("Successfully removed ping role <@&%v> from <#%v>!", roleID, channelID))
 }
 
-func HandleShowConfig(s *discordgo.Session, i *discordgo.InteractionCreate, opts CmdOptMap) {
+func getConfigPrint(sub *db.Subscription) string {
 	const TEMPLATE string = (
 		"# <#%v>\n"+
 		"**Active:** %v\n"+
@@ -163,13 +163,55 @@ func HandleShowConfig(s *discordgo.Session, i *discordgo.InteractionCreate, opts
 		"**Ping on removals:** %v\n"+
 		"**Game filter:**\n"+
 		"%v" + 
-		"**Roles to ping:\n**"+
+		"**Roles to ping:**\n"+
 		"%v")
+
+	// get games
+	gameList := ""
+	games, err := db.GetSubscriptionGames(sub.ChannelID)
+	if err != nil {
+		return fmt.Sprintf("Error getting games for <#%v>: %v", sub.ChannelID, err)
+	}
+	for _, g := range games {
+		gameList += fmt.Sprintf("- %v\n", g)
+	}
+	gameList = strings.TrimLeft(gameList, " \n")
+
+	// get ping roles
+	roleList := ""
+	roles, err := db.GetPingRoles(sub.ChannelID)
+	if err != nil {
+		return fmt.Sprintf("Error getting ping roles for <#%v>: %v", sub.ChannelID, err)
+	}
+	for _, r := range roles {
+		roleList += fmt.Sprintf("- <@&%v>\n", r)
+	}
+	roleList = strings.Trim(roleList, " \n")
+
+	return fmt.Sprintf(TEMPLATE, sub.ChannelID, sub.Active, sub.PingOnAdds, sub.PingOnRems, gameList, roleList)
+}
+
+func HandleShowConfig(s *discordgo.Session, i *discordgo.InteractionCreate, opts CmdOptMap) {
+	if allChan := opts["all_channels"]; allChan != nil && allChan.BoolValue() {
+		guildID, _ := strconv.ParseUint(i.GuildID, 10, 64)
+		
+		// get channels of server
+		channels, err := db.GetSubscriptionsFromGuild(guildID)
+		if err != nil {
+			RespondPrivate(s, i, fmt.Sprintf("Error trying to get server channels: %v", err))
+			return
+		}
+		
+		result := ""
+		for _, ch := range channels {
+			result += getConfigPrint(&ch) + "\n"
+		}
+		RespondPrivate(s, i, result)
+		return
+	}
 
 	channelID := GetChannelID(i, opts)
 	info, err := db.GetSubscription(channelID)
-
-	// stop if channel was never subscribed
 	if err != nil {
 		if err == sql.ErrNoRows {
 			RespondPrivate(s, i, fmt.Sprintf("No data available for <#%v>! This channel was never subscribed.", channelID))
@@ -177,32 +219,8 @@ func HandleShowConfig(s *discordgo.Session, i *discordgo.InteractionCreate, opts
 		}
 		// unknown error
 		RespondPrivate(s, i, fmt.Sprintf("Error checking subscription for <#%v>: %v", channelID, err))
-		return
+		return 
 	} 
 
-	// get games
-	gameStr := ""
-	games, err := db.GetSubscriptionGames(channelID)
-	if err != nil {
-		RespondPrivate(s, i, fmt.Sprintf("Error getting games for <#%v>: %v", channelID, err))
-		return
-	}
-	for _, g := range games {
-		gameStr += fmt.Sprintf("- %v\n", g)
-	}
-
-	// get ping roles
-	roleStr := ""
-	roles, err := db.GetPingRoles(channelID)
-	if err != nil {
-		RespondPrivate(s, i, fmt.Sprintf("Error getting ping roles for <#%v>: %v", channelID, err))
-		return
-	}
-	for _, r := range roles {
-		roleStr += fmt.Sprintf("- <@&%v>\n", r)
-	}
-	roleStr = strings.Trim(roleStr, " \n")
-
-	result := fmt.Sprintf(TEMPLATE, channelID, info.Active, info.PingOnAdds, info.PingOnRems, gameStr, roleStr)
-	RespondPrivate(s, i, result)
+	RespondPrivate(s, i, getConfigPrint(info))
 }

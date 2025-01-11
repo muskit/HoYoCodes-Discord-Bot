@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 
@@ -46,6 +47,36 @@ func GetSubscription(channelID uint64) (*Subscription, error) {
 		PingOnAdds: pingOnAdd,
 		PingOnRems: pingOnRem,
 	}, nil
+}
+
+func GetSubscriptionsFromGuild(guildID uint64) ([]Subscription, error) {
+	result := []Subscription{}
+
+	sels, err := DBCfg.Query("SELECT channel_id, active, ping_on_code_add, ping_on_code_remove FROM Subscriptions WHERE guild_id = ?", guildID)
+	if err != nil {
+		return result, err
+	}
+
+	var channel_id uint64
+	var active bool
+	var pingAdd bool
+	var pingRem bool
+	for sels.Next() {
+		err = sels.Err()
+		if err != nil {
+			return result, err
+		}
+
+		sels.Scan(&channel_id, &active, &pingAdd, &pingRem)
+		result = append(result, Subscription{
+			ChannelID: channel_id,
+			Active: active,
+			PingOnAdds: pingAdd,
+			PingOnRems: pingRem,
+		})
+	}
+
+	return result, nil
 }
 
 func AddPingRole(channelID uint64, pingRole uint64) error {
@@ -111,6 +142,10 @@ func GetSubscriptionGames(channelID uint64) ([]string, error) {
 func AddEmbed(messageID uint64, game string, channelID uint64) error {
 	_, err := DBCfg.Exec("INSERT INTO Embeds SET message_id = ?, game = ?, channel_id = ?", messageID, game, channelID)
 	return err
+}
+
+func RemoveEmbed(messageID uint64, game string) error {
+	return errors.New("TODO: guild_cfg.RemoveEmbed() unimplemented")
 }
 
 //// REMOVE ////

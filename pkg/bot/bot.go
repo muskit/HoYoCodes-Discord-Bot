@@ -207,7 +207,7 @@ var (
 				{
 					Name: "all_channels",
 					Description: "Whether to show config for all channels in this server or not. Default: false",
-					Type: discordgo.ApplicationCommandOptionChannel,
+					Type: discordgo.ApplicationCommandOptionBoolean,
 					Required: false,
 				},
 				{
@@ -381,13 +381,6 @@ func RunBot() {
 	if err != nil {
 		log.Fatalf("could not open session: %s", err)
 	}
-
-	// TODO: remove this; test editing nonexistent message
-	// Contains(err.Error(), "HTTP 404 Not Found") for message/channel not found
-	msg, err := session.ChannelMessageEdit("1327381036434325625", "1234", "hi")
-	log.Printf("%v // %v", msg, err)
-	msg, err = session.ChannelMessageEdit("1234", "1234", "hi")
-	log.Printf("%v // %v", msg, err)
 
 	// wait for interrupt
 	sigch := make(chan os.Signal, 1)
