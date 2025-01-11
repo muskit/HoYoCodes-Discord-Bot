@@ -82,7 +82,7 @@ func SetGameFilters(channelID uint64, games *set.Set[string]) error {
 	}
 	
 	for _, game := range games.Slice() {
-		_, err := DBCfg.Exec("INSERT INTO SubscriptionGames VALUES (?, ?)", channelID, game)
+		_, err := DBCfg.Exec("INSERT INTO SubscriptionGames SET channel_id = ?, game = ?", channelID, game)
 		if err != nil && !IsDuplicateErr(err) {
 			return err
 		}
@@ -106,6 +106,11 @@ func GetSubscriptionGames(channelID uint64) ([]string, error) {
 		results = append(results, val)
 	}
 	return results, nil
+}
+
+func AddEmbed(messageID uint64, game string, channelID uint64) error {
+	_, err := DBCfg.Exec("INSERT INTO Embeds SET message_id = ?, game = ?, channel_id = ?", messageID, game, channelID)
+	return err
 }
 
 //// REMOVE ////

@@ -11,6 +11,11 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// <@%s> = user
+// <@!%s> = user (nickname)
+// <#%s> = channel
+// <@&%s> = role
+
 var (
 	gameChoices = []*discordgo.ApplicationCommandOptionChoice {
 		{
@@ -180,10 +185,13 @@ var (
 			Description: "Create an embed that self-updates with active codes. Shows all games if none are specified.",
 			DefaultMemberPermissions: &adminCmdFlag,
 			Options: []*discordgo.ApplicationCommandOption{
-				optionalGameChoices[0],
-				optionalGameChoices[1],
-				optionalGameChoices[2],
-				optionalGameChoices[3],
+				{
+					Name: "game",
+					Description: "Game to create embed for.",
+					Type: discordgo.ApplicationCommandOptionString,
+					Choices: gameChoices,
+					Required: true,
+				},
 				{
 					Name: "channel",
 					Description: "Channel to create the embed. Default: current channel.",
@@ -231,10 +239,10 @@ var (
 )
 
 // Command arguments typedef
-type CMDArgsMap = map[string]*discordgo.ApplicationCommandInteractionDataOption
+type CmdOptMap = map[string]*discordgo.ApplicationCommandInteractionDataOption
 
-func parseArgs(options []*discordgo.ApplicationCommandInteractionDataOption) (om CMDArgsMap) {
-	om = make(CMDArgsMap)
+func parseArgs(options []*discordgo.ApplicationCommandInteractionDataOption) (om CmdOptMap) {
+	om = make(CmdOptMap)
 	for _, opt := range options {
 		om[opt.Name] = opt
 	}
@@ -248,12 +256,12 @@ func interactionAuthor(i *discordgo.Interaction) *discordgo.User {
 	return i.User
 }
 
-func GetChannel(i *discordgo.InteractionCreate, opts CMDArgsMap) uint64 {
-	channel, _ := strconv.ParseUint(i.ChannelID, 10, 64)
+func GetChannelID(i *discordgo.InteractionCreate, opts CmdOptMap) uint64 {
+	id, _ := strconv.ParseUint(i.ChannelID, 10, 64)
 	if val, exists := opts["channel"]; exists {
-		channel, _ = strconv.ParseUint(val.ChannelValue(nil).ID, 10, 64)
+		id, _ = strconv.ParseUint(val.ChannelValue(nil).ID, 10, 64)
 	}
-	return channel
+	return id
 }
 
 func Respond(s *discordgo.Session, i *discordgo.InteractionCreate, str string) {
@@ -282,7 +290,7 @@ func RespondPrivate(s *discordgo.Session, i *discordgo.InteractionCreate, str st
 }
 
 // EXAMPLE: echo cmd handler
-func handleEcho(s *discordgo.Session, i *discordgo.InteractionCreate, opts CMDArgsMap) {
+func handleEcho(s *discordgo.Session, i *discordgo.InteractionCreate, opts CmdOptMap) {
 	builder := new(strings.Builder)
 
 	author := interactionAuthor(i.Interaction)
@@ -353,7 +361,10 @@ func RunBot() {
 			HandleAddPingRole(s, i, o)
 		case "remove_ping_role":
 			HandleRemovePingRole(s, i, o)
+		case "create_embed":
+			HandleCreateEmbed(s, i, o)
 		default:
+			log.Println("WARNING: tried to run an unimplemented command!!")
 			RespondPrivate(s, i, "command unimplemented")
 		}
 
@@ -370,6 +381,13 @@ func RunBot() {
 	if err != nil {
 		log.Fatalf("could not open session: %s", err)
 	}
+
+	// TODO: remove this; test editing nonexistent message
+	// Contains(err.Error(), "HTTP 404 Not Found") for message/channel not found
+	msg, err := session.ChannelMessageEdit("1327381036434325625", "1234", "hi")
+	log.Printf("%v // %v", msg, err)
+	msg, err = session.ChannelMessageEdit("1234", "1234", "hi")
+	log.Printf("%v // %v", msg, err)
 
 	// wait for interrupt
 	sigch := make(chan os.Signal, 1)

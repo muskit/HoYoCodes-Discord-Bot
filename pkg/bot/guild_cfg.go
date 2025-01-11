@@ -11,8 +11,8 @@ import (
 	"github.com/muskit/hoyocodes-discord-bot/pkg/db"
 )
 
-func HandleSubscribe(s *discordgo.Session, i *discordgo.InteractionCreate, opts CMDArgsMap) {
-	channelID := GetChannel(i, opts)
+func HandleSubscribe(s *discordgo.Session, i *discordgo.InteractionCreate, opts CmdOptMap) {
+	channelID := GetChannelID(i, opts)
 	guildID, _ := strconv.ParseUint(i.GuildID, 10, 64)
 
 	notifyAdd := true
@@ -47,8 +47,8 @@ func HandleSubscribe(s *discordgo.Session, i *discordgo.InteractionCreate, opts 
 	RespondPrivate(s, i, fmt.Sprintf("Successfully subscribed <#%v>!", channelID))
 }
 
-func HandleUnsubscribe(s *discordgo.Session, i *discordgo.InteractionCreate, opts CMDArgsMap) {
-	channelID := GetChannel(i, opts)
+func HandleUnsubscribe(s *discordgo.Session, i *discordgo.InteractionCreate, opts CmdOptMap) {
+	channelID := GetChannelID(i, opts)
 
 	// check if channel is subscribed
 	if _, err := db.GetSubscription(channelID); err != nil {
@@ -70,8 +70,8 @@ func HandleUnsubscribe(s *discordgo.Session, i *discordgo.InteractionCreate, opt
 	}
 }
 
-func HandleFilterGames(s *discordgo.Session, i *discordgo.InteractionCreate, opts CMDArgsMap) {
-	channelID := GetChannel(i, opts)
+func HandleFilterGames(s *discordgo.Session, i *discordgo.InteractionCreate, opts CmdOptMap) {
+	channelID := GetChannelID(i, opts)
 
 	// check if channel is subscribed
 	if _, err := db.GetSubscription(channelID); err != nil {
@@ -107,8 +107,8 @@ func HandleFilterGames(s *discordgo.Session, i *discordgo.InteractionCreate, opt
 	RespondPrivate(s, i, fmt.Sprintf("Successfully set game filters for <#%v>!", channelID))
 }
 
-func HandleAddPingRole(s *discordgo.Session, i *discordgo.InteractionCreate, opts CMDArgsMap) {
-	channelID := GetChannel(i, opts)
+func HandleAddPingRole(s *discordgo.Session, i *discordgo.InteractionCreate, opts CmdOptMap) {
+	channelID := GetChannelID(i, opts)
 
 	// check if channel is subscribed
 	if _, err := db.GetSubscription(channelID); err != nil {
@@ -131,8 +131,8 @@ func HandleAddPingRole(s *discordgo.Session, i *discordgo.InteractionCreate, opt
 	RespondPrivate(s, i, fmt.Sprintf("Successfully added ping role for <@&%v> in <#%v>!", roleID, channelID))
 }
 
-func HandleRemovePingRole(s *discordgo.Session, i *discordgo.InteractionCreate, opts CMDArgsMap) {
-	channelID := GetChannel(i, opts)
+func HandleRemovePingRole(s *discordgo.Session, i *discordgo.InteractionCreate, opts CmdOptMap) {
+	channelID := GetChannelID(i, opts)
 
 	// check if channel is subscribed
 	if _, err := db.GetSubscription(channelID); err != nil {
@@ -155,7 +155,7 @@ func HandleRemovePingRole(s *discordgo.Session, i *discordgo.InteractionCreate, 
 	RespondPrivate(s, i, fmt.Sprintf("Successfully removed ping role <@&%v> from <#%v>!", roleID, channelID))
 }
 
-func HandleShowConfig(s *discordgo.Session, i *discordgo.InteractionCreate, opts CMDArgsMap) {
+func HandleShowConfig(s *discordgo.Session, i *discordgo.InteractionCreate, opts CmdOptMap) {
 	const TEMPLATE string = (
 		"# <#%v>\n"+
 		"**Active:** %v\n"+
@@ -166,7 +166,7 @@ func HandleShowConfig(s *discordgo.Session, i *discordgo.InteractionCreate, opts
 		"**Roles to ping:\n**"+
 		"%v")
 
-	channelID := GetChannel(i, opts)
+	channelID := GetChannelID(i, opts)
 	info, err := db.GetSubscription(channelID)
 
 	// stop if channel was never subscribed
