@@ -154,7 +154,9 @@ func HandleCreateEmbed(s *discordgo.Session, i *discordgo.InteractionCreate, opt
 	messageID, _ := strconv.ParseUint(message.ID, 10, 64)
 	err = db.AddEmbed(messageID, game, channelID)
 	if err != nil {
-		RespondPrivate(s, i, fmt.Sprintf("Created embed but can't save for updating: %v", err))
+		RespondPrivate(s, i, fmt.Sprintf(
+			"Created embed but can't save for updating: %v\n" +
+			"This embed will not update; please delete it and try again.", err))
 		return
 	}
 	RespondPrivate(s, i, fmt.Sprintf("Successfully created embed in <#%v> for %v!", channelID, game))

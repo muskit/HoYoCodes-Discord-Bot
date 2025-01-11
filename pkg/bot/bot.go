@@ -335,36 +335,42 @@ func RunBot() {
 
 		// "cast" InteractionData to ApplicationCommandInteractionData
 		data := i.ApplicationCommandData()
-		log.Printf("%s ran %s\n", interactionAuthor(i.Interaction), data.Name)
+		opts := parseArgs(data.Options)
 
-		o := parseArgs(data.Options)
-		if len(o) > 0 {
-			log.Println("Command options:")
-			for name, val := range o {
-				log.Printf("%s=%v\n", name, val)
-			}
-		}
+		// log.Printf("%s ran %s\n", interactionAuthor(i.Interaction), data.Name)
+		// if len(opts) > 0 {
+		// 	log.Println("Command options:")
+		// 	for name, val := range opts {
+		// 		log.Printf("%s=%v\n", name, val)
+		// 	}
+		// }
 
 		// Command matching
 		switch data.Name {
 		case "echo":
-			handleEcho(s, i, o)
+			handleEcho(s, i, opts)
 		case "subscribe_channel":
-			HandleSubscribe(s, i, o)
+			HandleSubscribe(s, i, opts)
 		case "unsubscribe_channel":
-			HandleUnsubscribe(s, i, o)
+			HandleUnsubscribe(s, i, opts)
 		case "filter_games":
-			HandleFilterGames(s, i, o)
+			HandleFilterGames(s, i, opts)
 		case "show_config":
-			HandleShowConfig(s, i, o)
+			HandleShowConfig(s, i, opts)
 		case "add_ping_role":
-			HandleAddPingRole(s, i, o)
+			HandleAddPingRole(s, i, opts)
 		case "remove_ping_role":
-			HandleRemovePingRole(s, i, o)
+			HandleRemovePingRole(s, i, opts)
 		case "create_embed":
-			HandleCreateEmbed(s, i, o)
+			HandleCreateEmbed(s, i, opts)
 		default:
-			log.Println("WARNING: tried to run an unimplemented command!!")
+			log.Printf("WARNING: tried to run an unimplemented command %v!!\n", data.Name)
+			if len(opts) > 0 {
+				log.Println("Command options:")
+				for name, val := range opts {
+					log.Printf("%s=%v\n", name, val)
+				}
+			}
 			RespondPrivate(s, i, "command unimplemented")
 		}
 
