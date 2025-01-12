@@ -2,6 +2,7 @@ package bot
 
 import (
 	"fmt"
+	"log"
 	"net/url"
 	"strconv"
 	"strings"
@@ -43,6 +44,50 @@ func AppendCodeParam(redeemURL string, code string) string {
 }
 
 func createEmbed(game string) *discordgo.MessageEmbed {
+	fields := []*discordgo.MessageEmbedField{}
+
+	// non-recent codes
+	codes := db.GetCodes(game, false, false)
+	for _, code := range codes {
+		fields = append(fields, &discordgo.MessageEmbedField{
+			Name: code[0],
+			Value: code[1],
+			Inline: true,
+		})
+	}
+
+	// spacer
+	fields = append(fields, 
+		&discordgo.MessageEmbedField{
+			Name: "\u200B",
+		},
+		&discordgo.MessageEmbedField{
+			Name: "--- Recently-Added Codes ---",
+		},
+	)
+
+	// TODO: recent codes
+
+	// spacer
+	fields = append(fields, 
+		&discordgo.MessageEmbedField{
+			Name: "\u200B",
+		},
+		&discordgo.MessageEmbedField{
+			Name: "--- Livestream Codes ---",
+		},
+	)
+
+	// livestream codes
+	codes = db.GetCodes(game, false, true)
+	for _, code := range codes {
+		fields = append(fields, &discordgo.MessageEmbedField{
+			Name: code[0],
+			Value: code[1],
+			Inline: true,
+		})
+	}
+
 	embed := &discordgo.MessageEmbed{
 		Author: &discordgo.MessageEmbedAuthor{
 			// Name: "Current Active Codes",
@@ -56,88 +101,7 @@ func createEmbed(game string) *discordgo.MessageEmbed {
 		Thumbnail: &discordgo.MessageEmbedThumbnail{
 			URL: image[game],
 		},
-		Fields: []*discordgo.MessageEmbedField{
-			{
-				Name: "20J9G348F76",
-				Value: "[2920 resource, 9019 resource2, even more resources, so many more!](https://hsr.hoyoverse.com/gift?code=20J9G348F76)",
-				Inline: true,
-			},
-			{
-				Name: "20J9G348F76",
-				Value: "[2920 resource, 9019 resource2, even more resources, so many more!](https://hsr.hoyoverse.com/gift?code=20J9G348F76)",
-				Inline: true,
-			},
-			{
-				Name: "20J9G348F76",
-				Value: "[2920 resource, 9019 resource2, even more resources, so many more!](https://hsr.hoyoverse.com/gift?code=20J9G348F76)",
-				Inline: true,
-			},
-			{
-				Name: "20J9G348F76",
-				Value: "[2920 resource, 9019 resource2, even more resources, so many more!](https://hsr.hoyoverse.com/gift?code=20J9G348F76)",
-				Inline: true,
-			},
-			{
-				Name: "20J9G348F76",
-				Value: "[2920 resource, 9019 resource2, even more resources, so many more!](https://hsr.hoyoverse.com/gift?code=20J9G348F76)",
-				Inline: true,
-			},
-			{
-				Name: "20J9G348F76",
-				Value: "[2920 resource, 9019 resource2, even more resources, so many more!](https://hsr.hoyoverse.com/gift?code=20J9G348F76)",
-				Inline: true,
-			},
-			{
-				Name: "20J9G348F76",
-				Value: "[2920 resource, 9019 resource2, even more resources, so many more!](https://hsr.hoyoverse.com/gift?code=20J9G348F76)",
-				Inline: true,
-			},
-			{
-				Name: "20J9G348F76",
-				Value: "[2920 resource, 9019 resource2, even more resources, so many more!](https://hsr.hoyoverse.com/gift?code=20J9G348F76)",
-				Inline: true,
-			},
-			{
-				Name: "20J9G348F76",
-				Value: "[2920 resource, 9019 resource2, even more resources, so many more!](https://hsr.hoyoverse.com/gift?code=20J9G348F76)",
-				Inline: true,
-			},
-			{
-				Name: "20J9G348F76",
-				Value: "[2920 resource, 9019 resource2, even more resources, so many more!](https://hsr.hoyoverse.com/gift?code=20J9G348F76)",
-				Inline: true,
-			},
-			{ // spacer
-				Name: "\u200B",
-			},
-			{
-				Name: "--- Recently-Added Codes ---",
-			},
-			{
-				Name: "20J9G348F76",
-				Value: "[2920 resource, 9019 resource2, even more resources, so many more!](https://hsr.hoyoverse.com/gift?code=20J9G348F76)",
-				Inline: true,
-			},
-			{
-				Name: "20J9G348F76",
-				Value: "[2920 resource, 9019 resource2, even more resources, so many more!](https://hsr.hoyoverse.com/gift?code=20J9G348F76)",
-				Inline: true,
-			},
-			{
-				Name: "20J9G348F76",
-				Value: "[2920 resource, 9019 resource2, even more resources, so many more!](https://hsr.hoyoverse.com/gift?code=20J9G348F76)",
-				Inline: true,
-			},
-			{
-				Name: "20J9G348F76",
-				Value: "[2920 resource, 9019 resource2, even more resources, so many more!](https://hsr.hoyoverse.com/gift?code=20J9G348F76)",
-				Inline: true,
-			},
-			{
-				// TODO: show only if url exists (doesn't for HI3)
-				Value: fmt.Sprintf("[Redemption Page](%v)", redeemURL[game]),
-			},
-		},
+		Fields: fields,
 		// TODO: use article edit datetime
 		Footer: &discordgo.MessageEmbedFooter{Text: "Refreshed"},
 		Timestamp: time.Now().Format(time.RFC3339), // Discord wants ISO8601; RFC3339 is an extension of ISO8601 and should be completely compatible.
@@ -201,8 +165,27 @@ func HandleDeleteEmbed(s *discordgo.Session, i *discordgo.InteractionCreate, opt
 	RespondPrivate(s, i, "Embed successfully removed!")
 }
 
-func UpdateEmbed(messageID uint64, channelID uint64, game string) {
+func UpdateGameEmbeds(s *discordgo.Session, game string) {
+	embeds, err := db.GetEmbeds(game)
+	if err != nil {
+		log.Fatalf("Error getting embeds to update: %v", err)
+	}
 
+	embedContent := createEmbed(game)
+
+	for _, emb := range embeds {
+		_, err = s.ChannelMessageEditEmbed(emb[0], emb[1], embedContent)
+		if err != nil {
+			if strings.Contains(err.Error(), "HTTP 404 Not Found") {
+				// embed message no longer exists
+				msgNum, _ := strconv.ParseUint(emb[1], 10, 64)
+				err := db.RemoveEmbed(msgNum, game)
+				if err != nil {
+					log.Printf("WARNING: error removing 404'd embed from db: %v", err)
+				}
+			}
+		}
+	}
 
 	// Contains(err.Error(), "HTTP 404 Not Found") for message/channel not found
 	// delete embed from DB if not found according to Discord

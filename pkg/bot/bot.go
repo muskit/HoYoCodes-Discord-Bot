@@ -17,7 +17,7 @@ import (
 // <@&%s> = role
 
 var (
-	gameChoices = []*discordgo.ApplicationCommandOptionChoice {
+	GameChoices = []*discordgo.ApplicationCommandOptionChoice {
 		{
 			Name: "Honkai Impact 3rd",
 			Value: "Honkai Impact 3rd",
@@ -41,28 +41,28 @@ var (
 			Name: "game_1",
 			Description: "A game to check codes for.",
 			Type: discordgo.ApplicationCommandOptionString,
-			Choices: gameChoices,
+			Choices: GameChoices,
 			Required: false,
 		},
 		{
 			Name: "game_2",
 			Description: "A game to check codes for.",
 			Type: discordgo.ApplicationCommandOptionString,
-			Choices: gameChoices,
+			Choices: GameChoices,
 			Required: false,
 		},
 		{
 			Name: "game_3",
 			Description: "A game to check codes for.",
 			Type: discordgo.ApplicationCommandOptionString,
-			Choices: gameChoices,
+			Choices: GameChoices,
 			Required: false,
 		},
 		{
 			Name: "game_4",
 			Description: "A game to check codes for.",
 			Type: discordgo.ApplicationCommandOptionString,
-			Choices: gameChoices,
+			Choices: GameChoices,
 			Required: false,
 		},
 	}
@@ -189,7 +189,7 @@ var (
 					Name: "game",
 					Description: "Game to create embed for.",
 					Type: discordgo.ApplicationCommandOptionString,
-					Choices: gameChoices,
+					Choices: GameChoices,
 					Required: true,
 				},
 				{
@@ -402,11 +402,10 @@ func RunBot() {
 		log.Fatalf("could not open session: %s", err)
 	}
 
-	// testing
-	// var channel_id uint64
-	// sel := db.DBCfg.QueryRow("SELECT channel_id FROM Subscriptions WHERE guild_id = 0")
-	// sel.Scan(&channel_id)
-	// session.ChannelMessageSend(strconv.FormatUint(channel_id, 10), "hello dm!")
+	// update loop waits for intercept to shut down
+	go UpdateLoop(session)
+
+	// TOOD: signal to go routines to stop
 
 	// wait for interrupt
 	sigch := make(chan os.Signal, 1)

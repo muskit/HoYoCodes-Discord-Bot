@@ -148,6 +148,25 @@ func RemoveEmbed(messageID uint64, game string) error {
 	return errors.New("TODO: guild_cfg.RemoveEmbed() unimplemented")
 }
 
+func GetEmbeds(game string) ( [][]string, error ) {
+	ret := [][]string{}
+	sels, err := DBCfg.Query("SELECT channel_id, message_id FROM Embeds WHERE game = ?", game)
+	if err != nil {
+		return ret, err
+	}
+
+	for sels.Next() {
+		if err = sels.Err(); err != nil {
+			return ret, err
+		}
+		channelID := ""
+		messageID := ""
+		sels.Scan(&channelID, &messageID)
+		ret = append(ret, []string{channelID, messageID})
+	}
+	return ret, nil
+}
+
 //// REMOVE ////
 type GuildAdmin struct {
 	GuildID uint64
