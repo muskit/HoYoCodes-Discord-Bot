@@ -2,7 +2,9 @@ package bot
 
 import (
 	"fmt"
+	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
@@ -137,6 +139,7 @@ func createEmbed(game string) *discordgo.MessageEmbed {
 			},
 		},
 		// TODO: use article edit datetime
+		Footer: &discordgo.MessageEmbedFooter{Text: "Refreshed"},
 		Timestamp: time.Now().Format(time.RFC3339), // Discord wants ISO8601; RFC3339 is an extension of ISO8601 and should be completely compatible.
 	}
 
@@ -167,16 +170,30 @@ func HandleCreateEmbed(s *discordgo.Session, i *discordgo.InteractionCreate, opt
 }
 
 func HandleDeleteEmbed(s *discordgo.Session, i *discordgo.InteractionCreate, opts CmdOptMap) {
-	channelID := strconv.FormatUint(GetChannelID(i, opts), 10)
-	messageID := opts["message"].StringValue()
+	messageURL := opts["message_link"].StringValue()
 
+	url, err := url.Parse(messageURL)
+	if err != nil {
+		RespondPrivate(s, i, fmt.Sprintf("Error parsing message link: %v", err))
+		return
+	}
+
+	pTrim := strings.Trim(url.Path, "/")
+	path := strings.Split(pTrim, "/")
+	if len(path) != 4 {
+		RespondPrivate(s, i, fmt.Sprintf("Bad URL: path length is %v, expected 4.", len(path)))
+		return
+	}
+
+	channelID := path[2]
+	messageID := path[3]
 	if err := s.ChannelMessageDelete(channelID, messageID); err != nil {
-		RespondPrivate(s, i, fmt.Sprintf("Error deleting message: %v", err))
+		RespondPrivate(s, i, fmt.Sprintf("Error deleting message %v: %v", messageID, err))
 		return
 	}
 
 	// remove message from DB
-	_, err := db.DBCfg.Exec("DELETE FROM Embeds WHERE message_id = ?", messageID)
+	_, err = db.DBCfg.Exec("DELETE FROM Embeds WHERE message_id = ?", messageID)
 	if err != nil {
 		RespondPrivate(s, i, fmt.Sprintf("Error removing embed from tracking: %v", err))
 		return

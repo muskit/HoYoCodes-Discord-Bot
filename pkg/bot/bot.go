@@ -205,16 +205,10 @@ var (
 			Description: "Delete a self-updating embed.",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
-					Name: "message",
-					Description: "Message ID containing the embed.",
+					Name: "message_link",
+					Description: "Link to message containing the embed.",
 					Type: discordgo.ApplicationCommandOptionString,
 					Required: true,
-				},
-				{
-					Name: "channel",
-					Description: "Channel where message resides. Must match, otherwise command will fail! Default: current channel",
-					Type: discordgo.ApplicationCommandOptionNumber,
-					Required: false,
 				},
 			},
 		},
