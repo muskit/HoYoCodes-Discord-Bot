@@ -257,7 +257,8 @@ func handleHelp(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		"  - `/subscribe`, `/unsubscribe`, `/filter_games`, `/add_ping_role`, `/remove_ping_role`\n\n"+
 		"As you're setting up subscriptions and embeds with these commands, use `/show_config` to check your configuration work so far.\n\n"+
 		"Feel free to DM me and set up your own personalized notifications!\n\n"+
-		"-# Developed by [muskit](https://muskit.net). Code reporting provided by [PocketTactics](<https://www.pockettactics.com>).")
+		"-# Developed by [muskit](https://muskit.net).\n"+
+		"-# Code reporting provided by [PocketTactics](<https://www.pockettactics.com>).")
 	RespondPrivate(s, i, HELP_TEXT)
 }
 
