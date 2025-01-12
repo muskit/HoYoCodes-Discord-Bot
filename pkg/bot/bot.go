@@ -389,9 +389,14 @@ func RunBot() {
 	go UpdateLoop(session)
 
 	// wait for interrupt
-	sigch := make(chan os.Signal, 1)
-	signal.Notify(sigch, os.Interrupt)
-	<-sigch
+	intrpChan := make(chan os.Signal, 1)
+	signal.Notify(intrpChan, os.Interrupt)
+	<-intrpChan
+
+	if !UpdatingMutex.TryLock() {
+		log.Println("Waiting for current update to finish...")
+		UpdatingMutex.Lock() // wait until update is over
+	}
 
 	// close session gracefully
 	err = session.Close()

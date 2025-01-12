@@ -2,6 +2,7 @@ package bot
 
 import (
 	"log"
+	"sync"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
@@ -9,16 +10,20 @@ import (
 	"github.com/muskit/hoyocodes-discord-bot/pkg/scraper"
 )
 
+var UpdatingMutex sync.Mutex
+
 // - Scrape for new codes and update DB
 // - Execute Discord tasks (concurrency within limits!)
 func UpdateLoop(session *discordgo.Session) {
 	for {
+		UpdatingMutex.Lock()
 		updateCodesDB()
 		updateEmbeds(session)
 		notifySubscribers(session)
+		UpdatingMutex.Unlock()
 
-		nextUpdateTime := time.Now().Add(4*time.Hour)
-		log.Printf("Running next update loop 4hrs from now at %v", nextUpdateTime.Format(time.Kitchen))
+		nextUpdateTime := time.Now().Add(2*time.Hour)
+		log.Printf("Running next update loop 2 hours from now at %v", nextUpdateTime.Format(time.Kitchen))
 		<-time.After(4*time.Hour)
 	}
 }
