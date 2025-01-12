@@ -39,8 +39,26 @@ var redeemURL map[string]string = map[string]string{
 	"Zenless Zone Zero": "https://zenless.hoyoverse.com/redemption",
 }
 
-func AppendCodeParam(redeemURL string, code string) string {
+func appendCodeParam(redeemURL string, code string) string {
 	return redeemURL + "?code=" + code
+}
+
+func appendCodeFields(fields []*discordgo.MessageEmbedField, codes [][]string, game string) []*discordgo.MessageEmbedField {
+	for _, code := range codes {
+		var val string
+		if url, exists := redeemURL[game]; exists {
+			val = fmt.Sprintf("[%v](%v)", code[1], appendCodeParam(url, code[0]))
+		} else {
+			val = code [1]
+		}
+
+		fields = append(fields, &discordgo.MessageEmbedField{
+			Name: code[0],
+			Value: val,
+			Inline: true,
+		})
+	}
+	return fields
 }
 
 func createEmbed(game string) *discordgo.MessageEmbed {
@@ -48,12 +66,21 @@ func createEmbed(game string) *discordgo.MessageEmbed {
 
 	// non-recent codes
 	codes := db.GetCodes(game, false, false)
-	for _, code := range codes {
+	fields = appendCodeFields(fields, codes, game)
+
+	// spacer
+	fields = append(fields, 
+		&discordgo.MessageEmbedField{
+			Name: "\u200B",
+		},
+	)
+	codes = db.GetCodes(game, true, false)
+	if len(codes) > 0 {
 		fields = append(fields, &discordgo.MessageEmbedField{
-			Name: code[0],
-			Value: code[1],
-			Inline: true,
-		})
+				Name: "--- Recently-Added Codes ---",
+			},
+		)
+		fields = appendCodeFields(fields, codes, game)
 	}
 
 	// spacer
@@ -61,31 +88,16 @@ func createEmbed(game string) *discordgo.MessageEmbed {
 		&discordgo.MessageEmbedField{
 			Name: "\u200B",
 		},
-		&discordgo.MessageEmbedField{
-			Name: "--- Recently-Added Codes ---",
-		},
-	)
-
-	// TODO: recent codes
-
-	// spacer
-	fields = append(fields, 
-		&discordgo.MessageEmbedField{
-			Name: "\u200B",
-		},
-		&discordgo.MessageEmbedField{
-			Name: "--- Livestream Codes ---",
-		},
 	)
 
 	// livestream codes
 	codes = db.GetCodes(game, false, true)
-	for _, code := range codes {
+	if len(codes) > 0 {
 		fields = append(fields, &discordgo.MessageEmbedField{
-			Name: code[0],
-			Value: code[1],
-			Inline: true,
-		})
+				Name: "--- Livestream Codes ---",
+			},
+		)
+		fields = appendCodeFields(fields, codes, game)
 	}
 
 	embed := &discordgo.MessageEmbed{

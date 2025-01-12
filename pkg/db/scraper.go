@@ -15,8 +15,9 @@ func GetCodes(game string, recent bool, livestream bool) [][]string {
 	var sels *sql.Rows
 	var err error
 
-	if false {
+	if recent {
 		// TODO: figure criteria for if a code is "recent"
+		return [][]string{}
 	} else {
 		sels, err = DBScraper.Query("SELECT code, description FROM Codes WHERE game = ? AND is_livestream = ? ORDER BY found ASC", game, livestream)
 	}
