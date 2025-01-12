@@ -39,6 +39,10 @@ var redeemURL map[string]string = map[string]string{
 	"Zenless Zone Zero": "https://zenless.hoyoverse.com/redemption",
 }
 
+var fieldSpacer discordgo.MessageEmbedField = discordgo.MessageEmbedField{
+	Name: "\u200B",
+}
+
 func appendCodeParam(redeemURL string, code string) string {
 	return redeemURL + "?code=" + code
 }
@@ -78,9 +82,7 @@ func createEmbed(game string) *discordgo.MessageEmbed {
 	codes = db.GetCodes(game, true, false)
 	if len(codes) > 0 {
 		fields = append(fields,
-			&discordgo.MessageEmbedField{
-				Name: "\u200B",
-			},
+			&fieldSpacer,
 			&discordgo.MessageEmbedField{
 				Name: "--- Recently-Added Codes ---",
 			},
@@ -92,15 +94,30 @@ func createEmbed(game string) *discordgo.MessageEmbed {
 	codes = db.GetCodes(game, false, true)
 	if len(codes) > 0 {
 		fields = append(fields,
-			&discordgo.MessageEmbedField{
-				Name: "\u200B",
-			},
+			&fieldSpacer,
 			&discordgo.MessageEmbedField{
 				Name: "--- Livestream Codes ---",
 			},
 		)
 		fields = appendCodeFields(fields, codes, game)
 	}
+
+	redeem, exists := redeemURL[game]
+	if exists {
+		fields = append(fields,
+			// &fieldSpacer,
+			&discordgo.MessageEmbedField{
+				Value: fmt.Sprintf("**[Redemption page](%v)**", redeem),
+			},
+		)
+	}
+
+	// ENHANCEMENT: use article edit datetime?
+	fields = append(fields,
+		&discordgo.MessageEmbedField{
+			Value: fmt.Sprintf("-# Refreshed <t:%v:R>, <t:%v:f>", time.Now().Unix(), time.Now().Unix()),
+		},
+	)
 
 	embed := &discordgo.MessageEmbed{
 		Color: color[game],
@@ -110,9 +127,6 @@ func createEmbed(game string) *discordgo.MessageEmbed {
 			URL: image[game],
 		},
 		Fields: fields,
-		// TODO: use article edit datetime
-		Footer: &discordgo.MessageEmbedFooter{Text: "Refreshed"},
-		Timestamp: time.Now().Format(time.RFC3339), // Discord wants ISO8601; RFC3339 is an extension of ISO8601 and should be completely compatible.
 	}
 
 	return embed

@@ -94,7 +94,7 @@ var (
 				},
 				{
 					Name: "channel",
-					Description: "Channel to create a subcription for. Default: the current channel.",
+					Description: "Channel to create a subscription for. Default: the current channel.",
 					Type: discordgo.ApplicationCommandOptionChannel,
 					Required: false,
 				},
@@ -251,7 +251,7 @@ func handleHelp(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	HELP_TEXT := (
 		"**Welcome to HoyoCodes!**\n\n"+
 		"This bot will notify you of new goods code releases for MiHoYo games in two different formats:\n"+
-		"- Auto-updating embeds that list all codes reported to be active and usable\n"+
+		"- Auto-updating status embeds that list all codes reported to be active and usable\n"+
 		"  - `/create_embed`, `/delete_embed`\n"+
 		"- Channel subscriptions that notify when new codes are added and/or removed\n"+
 		"  - `/subscribe`, `/unsubscribe`, `/filter_games`, `/add_ping_role`, `/remove_ping_role`\n\n"+
@@ -387,8 +387,6 @@ func RunBot() {
 
 	// update loop waits for intercept to shut down
 	go UpdateLoop(session)
-
-	// TOOD: signal to go routines to stop
 
 	// wait for interrupt
 	sigch := make(chan os.Signal, 1)
