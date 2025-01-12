@@ -36,6 +36,10 @@ var redeemURL map[string]string = map[string]string{
 	"Zenless Zone Zero": "https://zenless.hoyoverse.com/redemption",
 }
 
+func AppendCodeParam(redeemURL string, code string) string {
+	return redeemURL + "?code=" + code
+}
+
 func createEmbed(game string) *discordgo.MessageEmbed {
 	embed := &discordgo.MessageEmbed{
 		Author: &discordgo.MessageEmbedAuthor{
@@ -53,52 +57,52 @@ func createEmbed(game string) *discordgo.MessageEmbed {
 		Fields: []*discordgo.MessageEmbedField{
 			{
 				Name: "20J9G348F76",
-				Value: "2920 resource, 9019 resource2, even more resources, so many more!",
+				Value: "[2920 resource, 9019 resource2, even more resources, so many more!](https://hsr.hoyoverse.com/gift?code=20J9G348F76)",
 				Inline: true,
 			},
 			{
 				Name: "20J9G348F76",
-				Value: "2920 resource, 9019 resource2, even more resources, so many more!",
+				Value: "[2920 resource, 9019 resource2, even more resources, so many more!](https://hsr.hoyoverse.com/gift?code=20J9G348F76)",
 				Inline: true,
 			},
 			{
 				Name: "20J9G348F76",
-				Value: "2920 resource, 9019 resource2, even more resources, so many more!",
+				Value: "[2920 resource, 9019 resource2, even more resources, so many more!](https://hsr.hoyoverse.com/gift?code=20J9G348F76)",
 				Inline: true,
 			},
 			{
 				Name: "20J9G348F76",
-				Value: "2920 resource, 9019 resource2, even more resources, so many more!",
+				Value: "[2920 resource, 9019 resource2, even more resources, so many more!](https://hsr.hoyoverse.com/gift?code=20J9G348F76)",
 				Inline: true,
 			},
 			{
 				Name: "20J9G348F76",
-				Value: "2920 resource, 9019 resource2, even more resources, so many more!",
+				Value: "[2920 resource, 9019 resource2, even more resources, so many more!](https://hsr.hoyoverse.com/gift?code=20J9G348F76)",
 				Inline: true,
 			},
 			{
 				Name: "20J9G348F76",
-				Value: "2920 resource, 9019 resource2, even more resources, so many more!",
+				Value: "[2920 resource, 9019 resource2, even more resources, so many more!](https://hsr.hoyoverse.com/gift?code=20J9G348F76)",
 				Inline: true,
 			},
 			{
 				Name: "20J9G348F76",
-				Value: "2920 resource, 9019 resource2, even more resources, so many more!",
+				Value: "[2920 resource, 9019 resource2, even more resources, so many more!](https://hsr.hoyoverse.com/gift?code=20J9G348F76)",
 				Inline: true,
 			},
 			{
 				Name: "20J9G348F76",
-				Value: "2920 resource, 9019 resource2, even more resources, so many more!",
+				Value: "[2920 resource, 9019 resource2, even more resources, so many more!](https://hsr.hoyoverse.com/gift?code=20J9G348F76)",
 				Inline: true,
 			},
 			{
 				Name: "20J9G348F76",
-				Value: "2920 resource, 9019 resource2, even more resources, so many more!",
+				Value: "[2920 resource, 9019 resource2, even more resources, so many more!](https://hsr.hoyoverse.com/gift?code=20J9G348F76)",
 				Inline: true,
 			},
 			{
 				Name: "20J9G348F76",
-				Value: "2920 resource, 9019 resource2, even more resources, so many more!",
+				Value: "[2920 resource, 9019 resource2, even more resources, so many more!](https://hsr.hoyoverse.com/gift?code=20J9G348F76)",
 				Inline: true,
 			},
 			{ // spacer
@@ -109,22 +113,22 @@ func createEmbed(game string) *discordgo.MessageEmbed {
 			},
 			{
 				Name: "20J9G348F76",
-				Value: "2920 resource, 9019 resource2, even more resources, so many more!",
+				Value: "[2920 resource, 9019 resource2, even more resources, so many more!](https://hsr.hoyoverse.com/gift?code=20J9G348F76)",
 				Inline: true,
 			},
 			{
 				Name: "20J9G348F76",
-				Value: "2920 resource, 9019 resource2, even more resources, so many more!",
+				Value: "[2920 resource, 9019 resource2, even more resources, so many more!](https://hsr.hoyoverse.com/gift?code=20J9G348F76)",
 				Inline: true,
 			},
 			{
 				Name: "20J9G348F76",
-				Value: "2920 resource, 9019 resource2, even more resources, so many more!",
+				Value: "[2920 resource, 9019 resource2, even more resources, so many more!](https://hsr.hoyoverse.com/gift?code=20J9G348F76)",
 				Inline: true,
 			},
 			{
 				Name: "20J9G348F76",
-				Value: "2920 resource, 9019 resource2, even more resources, so many more!",
+				Value: "[2920 resource, 9019 resource2, even more resources, so many more!](https://hsr.hoyoverse.com/gift?code=20J9G348F76)",
 				Inline: true,
 			},
 			{
