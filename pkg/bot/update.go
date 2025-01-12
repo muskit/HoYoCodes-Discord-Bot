@@ -16,6 +16,9 @@ func UpdateLoop(session *discordgo.Session) {
 		updateCodesDB()
 		updateEmbeds(session)
 		notifySubscribers(session)
+
+		nextUpdateTime := time.Now().Add(4*time.Hour)
+		log.Printf("Running next update loop 4hrs from now at %v", nextUpdateTime.Format(time.Kitchen))
 		<-time.After(4*time.Hour)
 	}
 }
