@@ -2,7 +2,6 @@ package db
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"log"
 
@@ -144,8 +143,9 @@ func AddEmbed(messageID uint64, game string, channelID uint64) error {
 	return err
 }
 
-func RemoveEmbed(messageID uint64, game string) error {
-	return errors.New("TODO: guild_cfg.RemoveEmbed() unimplemented")
+func RemoveEmbed(messageID uint64) error {
+	_, err := DBCfg.Exec("DELETE FROM Embeds WHERE message_id = ?", messageID)
+	return err
 }
 
 func GetEmbeds(game string) ( [][]string, error ) {

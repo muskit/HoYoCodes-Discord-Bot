@@ -2,12 +2,12 @@ CREATE DATABASE IF NOT EXISTS scraper;
 USE scraper;
 
 CREATE TABLE `Codes` (
-  `id` string,
+  `code` varchar(50),
   `game` ENUM ('Honkai Impact 3rd', 'Genshin Impact', 'Honkai Star Rail', 'Zenless Zone Zero'),
-  `description` string,
+  `description` text,
   `found` datetime,
   `is_livestream` bool,
-  PRIMARY KEY (`id`, `game`)
+  PRIMARY KEY (`code`, `game`)
 );
 
 CREATE TABLE `ScrapeStats` (
@@ -16,3 +16,4 @@ CREATE TABLE `ScrapeStats` (
   `last_scrape_when` datetime,
   `last_edit_when` datetime
 );
+

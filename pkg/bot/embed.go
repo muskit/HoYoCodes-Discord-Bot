@@ -179,7 +179,8 @@ func HandleDeleteEmbed(s *discordgo.Session, i *discordgo.InteractionCreate, opt
 	}
 
 	// remove message from DB
-	_, err = db.DBCfg.Exec("DELETE FROM Embeds WHERE message_id = ?", messageID)
+	id, _ := strconv.ParseUint(messageID, 10, 64)
+	err = db.RemoveEmbed(id)
 	if err != nil {
 		RespondPrivate(s, i, fmt.Sprintf("Error removing embed from tracking: %v", err))
 		return
@@ -201,10 +202,12 @@ func UpdateGameEmbeds(s *discordgo.Session, game string) {
 			if strings.Contains(err.Error(), "HTTP 404 Not Found") {
 				// embed message no longer exists
 				msgNum, _ := strconv.ParseUint(emb[1], 10, 64)
-				err := db.RemoveEmbed(msgNum, game)
+				err := db.RemoveEmbed(msgNum)
 				if err != nil {
-					log.Printf("WARNING: error removing 404'd embed from db: %v", err)
+					log.Printf("WARNING: error removing 404'd embed from db during update: %v", err)
 				}
+			} else {
+				log.Fatalf("Error updating embed: %v", err)
 			}
 		}
 	}
