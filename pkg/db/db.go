@@ -12,49 +12,45 @@ import (
 )
 
 const connStrCfg = "%s:%s@tcp(%s:%s)/guild_cfg"
-const connStrCodes = "%s:%s@tcp(%s:%s)/codes"
+const connStrScraper = "%s:%s@tcp(%s:%s)/scraper"
 
 var DBCfg *sql.DB
-var DBCodes *sql.DB
+var DBScraper *sql.DB
 
 func IsDuplicateErr(err error) bool {
 	return strings.Contains(err.Error(), "Error 1062 (23000): Duplicate entry")
 }
 
-func init() {
-	log.Println("initializing db...")
-	
-	// read env
-	err := godotenv.Load()
-	if err != nil {
-		log.Printf("WARNING: could not load .env: %v", err)
-	}
-
+func initDB(connStr string) *sql.DB {
+	var ret *sql.DB
 	// connect to DB and set objects
 	user := os.Getenv("db_user")
 	pass := os.Getenv("db_pass")
 	host := os.Getenv("db_host")
 	port := os.Getenv("db_port")
 
-	log.Println("Initializing server config db...")
-	DBCfg, err = sql.Open("mysql", fmt.Sprintf(connStrCfg, user, pass, host, port))
+	ret, err := sql.Open("mysql", fmt.Sprintf(connStr, user, pass, host, port))
     if err != nil {
         log.Fatalf("error on open: %v", err)
     }
-	err = DBCfg.Ping()
+	err = ret.Ping()
     if err != nil {
         log.Fatalf("error on connect: %v", err)
     }
-	log.Println("Server config db initialized!")
+	return ret
+}
 
-	// log.Println("Initializing codes db...")
-	// DBCodes, err = sql.Open("mysql", fmt.Sprintf(connStrCodes, user, pass, host, port))
-    // if err != nil {
-    //     log.Fatalf("error on open: %v", err)
-    // }
-	// err = DBCodes.Ping()
-    // if err != nil {
-    //     log.Fatalf("error on connect: %v", err)
-    // }
-	// log.Println("Codes db initialized!")
+func init() {
+	// read env
+	err := godotenv.Load()
+	if err != nil {
+		log.Printf("WARNING: could not load .env: %v", err)
+	}
+
+	log.Println("Initializing server config db...")
+	DBCfg = initDB(connStrCfg)
+
+	log.Println("Initializing scraper db...")
+	DBScraper = initDB(connStrScraper)
+
 }

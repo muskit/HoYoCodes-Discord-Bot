@@ -1,6 +1,9 @@
 package main
 
-import "github.com/muskit/hoyocodes-discord-bot/pkg/bot"
+import (
+	"github.com/muskit/hoyocodes-discord-bot/pkg/bot"
+	"github.com/muskit/hoyocodes-discord-bot/pkg/update"
+)
 
 func main() {
 
@@ -9,6 +12,8 @@ func main() {
 	// scraper.ScrapeHSR()
 	// scraper.ScrapeHSRLive()
 	// scraper.ScrapeZZZ()
-	
+
+	update.UpdateRoutine()
+
 	bot.RunBot()
 }
