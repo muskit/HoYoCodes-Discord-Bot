@@ -66,34 +66,36 @@ func createEmbed(game string) *discordgo.MessageEmbed {
 
 	// non-recent codes
 	codes := db.GetCodes(game, false, false)
-	fields = appendCodeFields(fields, codes, game)
+	if len(codes) > 0 {
+		fields = append(fields,
+			&discordgo.MessageEmbedField{
+				Name: "--- Active Codes ---",
+			},
+		)
+		fields = appendCodeFields(fields, codes, game)
+	}
 
-	// spacer
-	fields = append(fields, 
-		&discordgo.MessageEmbedField{
-			Name: "\u200B",
-		},
-	)
 	codes = db.GetCodes(game, true, false)
 	if len(codes) > 0 {
-		fields = append(fields, &discordgo.MessageEmbedField{
+		fields = append(fields,
+			&discordgo.MessageEmbedField{
+				Name: "\u200B",
+			},
+			&discordgo.MessageEmbedField{
 				Name: "--- Recently-Added Codes ---",
 			},
 		)
 		fields = appendCodeFields(fields, codes, game)
 	}
 
-	// spacer
-	fields = append(fields, 
-		&discordgo.MessageEmbedField{
-			Name: "\u200B",
-		},
-	)
-
 	// livestream codes
 	codes = db.GetCodes(game, false, true)
 	if len(codes) > 0 {
-		fields = append(fields, &discordgo.MessageEmbedField{
+		fields = append(fields,
+			&discordgo.MessageEmbedField{
+				Name: "\u200B",
+			},
+			&discordgo.MessageEmbedField{
 				Name: "--- Livestream Codes ---",
 			},
 		)
@@ -101,15 +103,9 @@ func createEmbed(game string) *discordgo.MessageEmbed {
 	}
 
 	embed := &discordgo.MessageEmbed{
-		Author: &discordgo.MessageEmbedAuthor{
-			// Name: "Current Active Codes",
-		},
 		Color: color[game],
 		Title: game,
 		URL: articleURL[game],
-		// Image: &discordgo.MessageEmbedImage{
-		// 	URL: image[game],
-		// },
 		Thumbnail: &discordgo.MessageEmbedThumbnail{
 			URL: image[game],
 		},
