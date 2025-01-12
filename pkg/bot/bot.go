@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
-	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
@@ -70,23 +69,10 @@ var (
 	adminCmdFlag int64 = discordgo.PermissionAdministrator
 
 	commands = []*discordgo.ApplicationCommand {
-		/// TEST ///
 		{
-			Name:        "echo",
-			Description: "Say something through the bot",
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Name:        "message",
-					Description: "Contents of the message",
-					Type:        discordgo.ApplicationCommandOptionString,
-					Required:    true,
-				},
-				{
-					Name:        "author",
-					Description: "Whether to prepend message's author",
-					Type:        discordgo.ApplicationCommandOptionBoolean,
-				},
-			},
+			Name: "help",
+			Description: "Introduction on configuring the bot.",
+			DefaultMemberPermissions: &adminCmdFlag,
 		},
 		/// CHANNEL CONFIGURATION ///
 		{
@@ -261,11 +247,18 @@ func parseArgs(options []*discordgo.ApplicationCommandInteractionDataOption) (om
 	return
 }
 
-func interactionAuthor(i *discordgo.Interaction) *discordgo.User {
-	if i.Member != nil {
-		return i.Member.User
-	}
-	return i.User
+func handleHelp(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	HELP_TEXT := (
+		"**Welcome to HoyoCodes!**\n\n"+
+		"This bot will notify you of new goods code releases for MiHoYo games in two different formats:\n"+
+		"- Auto-updating embeds that list all codes reported to be active and usable\n"+
+		"  - `/create_embed`, `/delete_embed`\n"+
+		"- Channel subscriptions that notify when new codes are added and/or removed\n"+
+		"  - `/subscribe`, `/unsubscribe`, `/filter_games`, `/add_ping_role`, `/remove_ping_role`\n\n"+
+		"As you're setting up subscriptions and embeds with these commands, use `/show_config` to check your configuration work so far.\n\n"+
+		"Feel free to DM me and set up your own personalized notifications!\n\n"+
+		"-# Developed by [muskit](https://muskit.net). Code reporting provided by [PocketTactics](<https://www.pockettactics.com>).")
+	RespondPrivate(s, i, HELP_TEXT)
 }
 
 func GetChannelID(i *discordgo.InteractionCreate, opts CmdOptMap) uint64 {
@@ -299,17 +292,6 @@ func RespondPrivate(s *discordgo.Session, i *discordgo.InteractionCreate, str st
 	if err != nil {
 		log.Panicf("could not respond to interaction: %s", err)
 	}
-}
-
-// EXAMPLE: echo cmd handler
-func handleEcho(s *discordgo.Session, i *discordgo.InteractionCreate, opts CmdOptMap) {
-	builder := new(strings.Builder)
-
-	author := interactionAuthor(i.Interaction)
-	builder.WriteString("**" + author.String() + "** says: ")
-	builder.WriteString(opts["message"].StringValue())
-
-	RespondPrivate(s, i, builder.String())
 }
 
 func RunBot() {
@@ -359,8 +341,8 @@ func RunBot() {
 
 		// Command matching
 		switch data.Name {
-		case "echo":
-			handleEcho(s, i, opts)
+		case "help":
+			handleHelp(s, i)
 		case "subscribe_channel":
 			HandleSubscribe(s, i, opts)
 		case "unsubscribe_channel":
