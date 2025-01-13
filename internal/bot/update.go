@@ -16,18 +16,17 @@ import (
 
 var UpdatingMutex sync.Mutex
 
-// - Scrape for new codes and update DB
-// - Execute Discord tasks (concurrency within limits!)
 func UpdateLoop(session *discordgo.Session, waitFor time.Duration) {
 	for {
 		UpdatingMutex.Lock()
+		slog.Info("Running update loop...")
 		updateCodesDB()
 		updateEmbeds(session)
 		notifySubscribers(session)
 		UpdatingMutex.Unlock()
 
 		nextUpdateTime := time.Now().Add(waitFor)
-		slog.Info(fmt.Sprintf("Running next update loop %v from now at %v", waitFor, nextUpdateTime.Format(time.Kitchen)))
+		slog.Info(fmt.Sprintf("Finished update loop! Running again %v from now at %v", waitFor, nextUpdateTime.Format(time.Kitchen)))
 		<-time.After(4*time.Hour)
 	}
 }

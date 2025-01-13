@@ -282,20 +282,14 @@ var (
 		/// MISC ///
 		{
 			Name: "active_codes",
-			Description: "Check the current active codes for MiHoYo games. Shows all games if none are specified.",
+			Description: "Check the current active codes for specified game.",
 			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Name: "recents_only",
-					Description: "Show only codes that have been released recently. Default: true",
-					Type: discordgo.ApplicationCommandOptionBoolean,
-					Required: false,
-				},
 				{
 					Name: "game",
 					Description: "A game to check codes for.",
 					Type: discordgo.ApplicationCommandOptionString,
 					Choices: GameChoices,
-					Required: false,
+					Required: true,
 				},
 			},
 		},
@@ -428,6 +422,8 @@ func RunBot() {
 			HandleCreateEmbed(s, i, opts)
 		case "delete_embed":
 			HandleDeleteEmbed(s, i, opts)
+		case "active_codes":
+			HandleActiveCodes(s, i, opts)
 		default:
 			slog.Warn(fmt.Sprintf("Tried to run an unimplemented command %s!!", data.Name))
 			if len(opts) > 0 {

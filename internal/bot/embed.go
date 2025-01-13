@@ -202,3 +202,17 @@ func HandleDeleteEmbed(s *discordgo.Session, i *discordgo.InteractionCreate, opt
 	RespondPrivate(s, i, "Embed successfully removed!")
 }
 
+func HandleActiveCodes(s *discordgo.Session, i *discordgo.InteractionCreate, opts CmdOptMap) {
+	game := opts["game"].StringValue()
+	embed := createEmbed(game)
+	resp := discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: "Note: this embed will NOT auto-update. Please delete with `/delete_embed`.",
+			Embeds: []*discordgo.MessageEmbed{
+				embed,
+			},
+		},
+	}
+	s.InteractionRespond(i.Interaction, &resp)
+}
