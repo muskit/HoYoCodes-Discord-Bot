@@ -4,7 +4,7 @@ import (
 	"flag"
 	"log/slog"
 
-	"github.com/muskit/hoyocodes-discord-bot/pkg/bot"
+	"github.com/muskit/hoyocodes-discord-bot/internal/bot"
 )
 
 func main() {

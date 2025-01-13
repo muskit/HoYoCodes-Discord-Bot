@@ -8,7 +8,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/hashicorp/go-set/v3"
-	"github.com/muskit/hoyocodes-discord-bot/pkg/db"
+	"github.com/muskit/hoyocodes-discord-bot/internal/db"
 )
 
 func HandleSubscribe(s *discordgo.Session, i *discordgo.InteractionCreate, opts CmdOptMap) {

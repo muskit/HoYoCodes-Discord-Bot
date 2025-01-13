@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/muskit/hoyocodes-discord-bot/pkg/db"
+	"github.com/muskit/hoyocodes-discord-bot/internal/db"
 )
 
 var color map[string]int = map[string]int{

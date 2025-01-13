@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/muskit/hoyocodes-discord-bot/pkg/db"
-	"github.com/muskit/hoyocodes-discord-bot/pkg/scraper"
+	"github.com/muskit/hoyocodes-discord-bot/internal/db"
+	"github.com/muskit/hoyocodes-discord-bot/internal/scraper"
 )
 
 var UpdatingMutex sync.Mutex
