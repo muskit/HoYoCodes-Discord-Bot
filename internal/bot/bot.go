@@ -25,13 +25,13 @@ var (
 	helpIntro string
 	//go:embed help_texts/subscriptions.md
 	helpSubscriptions string
-	//go:embed help_texts/embeds.md
-	helpEmbeds string
+	//go:embed help_texts/tickers.md
+	helpTickers string
 
 	helpTexts = map[string]string {
 		"intro": helpIntro,
 		"subscriptions": helpSubscriptions,
-		"embeds": helpEmbeds,
+		"tickers": helpTickers,
 	}
 
 	helpChoices = []*discordgo.ApplicationCommandOptionChoice {
@@ -44,8 +44,8 @@ var (
 			Value: "subscriptions",
 		},
 		{
-			Name: "embeds",
-			Value: "embeds",
+			Name: "tickers",
+			Value: "tickers",
 		},
 	}
 

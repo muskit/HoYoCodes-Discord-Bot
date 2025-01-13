@@ -40,32 +40,6 @@ var redeemURL map[string]string = map[string]string{
 	"Zenless Zone Zero": "https://zenless.hoyoverse.com/redemption",
 }
 
-var fieldSpacer discordgo.MessageEmbedField = discordgo.MessageEmbedField{
-	Name: "\u200B",
-}
-
-func appendCodeParam(redeemURL string, code string) string {
-	return redeemURL + "?code=" + code
-}
-
-func appendCodeFields(slice []*discordgo.MessageEmbedField, codes [][]string, game string) []*discordgo.MessageEmbedField {
-	for _, code := range codes {
-		var val string
-		if url, exists := redeemURL[game]; exists {
-			val = fmt.Sprintf("[%v](%v)", code[1], appendCodeParam(url, code[0]))
-		} else {
-			val = code [1]
-		}
-
-		slice = append(slice, &discordgo.MessageEmbedField{
-			Name: code[0],
-			Value: val,
-			Inline: true,
-		})
-	}
-	return slice
-}
-
 func codeList(codes [][]string, game string) string {
 	ret := ""
 	for _, elem := range codes {

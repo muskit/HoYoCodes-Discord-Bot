@@ -75,7 +75,7 @@ func updateTickersRoutine(s *discordgo.Session, game string) {
 	slog.Debug("", "game", game)
 	content := createCodePrint(game, true)
 	slog.Debug("", "length", len(content))
-	slog.Debug(content)
+	slog.Debug(fmt.Sprintf("Content is as follows:\n%v", content))
 
 	for _, emb := range tickers {
 		channelID, messageID := emb[0], emb[1]
