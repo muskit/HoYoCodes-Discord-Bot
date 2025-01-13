@@ -45,7 +45,7 @@ func init() {
 	// read env
 	err := godotenv.Load()
 	if err != nil {
-		slog.Warn(fmt.Sprintf("Could not load .env:", err))
+		slog.Warn(fmt.Sprintf("Could not load .env: %v", err))
 	}
 
 	slog.Info("Initializing server config db...")
