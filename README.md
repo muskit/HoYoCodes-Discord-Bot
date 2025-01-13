@@ -9,3 +9,7 @@ token=
 sql_user=
 sql_pass=
 ```
+
+## TODO
+- Implement subscription notifications
+- Make commands more intuitive
