@@ -33,12 +33,15 @@ func UpdateLoop(session *discordgo.Session, waitFor time.Duration) {
 func updateCodesDB() {
 	slog.Debug("--- [Update Code Database] ---")
 	for _, cfg := range scraper.Configs {
+		checkTime := time.Now()
+		var updateTime time.Time
+
 		livestream := false
 		for i := 0; i < 2; i++ {
-			codes, timeStr := scraper.ScrapePJT(cfg)
-			time, _ := time.Parse(time.RFC3339, timeStr)
+			codes, updateTimeStr := scraper.ScrapePJT(cfg)
+			updateTime, _ = time.Parse(time.RFC3339, updateTimeStr)
 			for code, desc := range codes {
-				if err := db.AddCode(code, cfg.Game, desc, livestream, time); err != nil {
+				if err := db.AddCode(code, cfg.Game, desc, livestream, updateTime); err != nil {
 					if !db.IsDuplicateErr(err) {
 						log.Fatalf("Error adding code to database: %v\n", err)
 					}
@@ -46,6 +49,10 @@ func updateCodesDB() {
 			}
 			cfg.Heading = "livestream codes"
 			livestream = true
+		}
+
+		if err := db.SetScrapeStats(cfg.Game, updateTime, checkTime); err != nil {
+			log.Fatalf("Error updating scrape stats for %v: %v", cfg.Game, err)
 		}
 	}
 }

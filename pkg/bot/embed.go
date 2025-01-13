@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/muskit/hoyocodes-discord-bot/pkg/db"
@@ -113,10 +112,13 @@ func createEmbed(game string) *discordgo.MessageEmbed {
 		)
 	}
 
-	// ENHANCEMENT: use article edit datetime?
+	checkTime, updateTime, err := db.GetScrapeStats(game)
+	if err != nil {
+		log.Fatalf("Error getting update time for %v: %v", game, err)
+	}
 	fields = append(fields,
 		&discordgo.MessageEmbedField{
-			Value: fmt.Sprintf("-# Refreshed <t:%v:R>, <t:%v:f>", time.Now().Unix(), time.Now().Unix()),
+			Value: fmt.Sprintf("-# Checked <t:%v:R>; source updated <t:%v:R>.", checkTime.Unix(), updateTime.Unix()),
 		},
 	)
 

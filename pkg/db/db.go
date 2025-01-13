@@ -13,7 +13,7 @@ import (
 )
 
 const connStrCfg = "%s:%s@tcp(%s:%s)/guild_cfg"
-const connStrScraper = "%s:%s@tcp(%s:%s)/scraper"
+const connStrScraper = "%s:%s@tcp(%s:%s)/scraper?parseTime=true"
 
 var DBCfg *sql.DB
 var DBScraper *sql.DB
