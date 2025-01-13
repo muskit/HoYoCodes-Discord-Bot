@@ -3,7 +3,6 @@ package bot
 import (
 	"fmt"
 	"log"
-	"log/slog"
 	"net/url"
 	"strconv"
 	"strings"
@@ -191,27 +190,3 @@ func HandleDeleteEmbed(s *discordgo.Session, i *discordgo.InteractionCreate, opt
 	RespondPrivate(s, i, "Embed successfully removed!")
 }
 
-func UpdateGameEmbeds(s *discordgo.Session, game string) {
-	embeds, err := db.GetEmbeds(game)
-	if err != nil {
-		log.Fatalf("Error getting embeds to update: %v", err)
-	}
-
-	embedContent := createEmbed(game)
-
-	for _, emb := range embeds {
-		_, err = s.ChannelMessageEditEmbed(emb[0], emb[1], embedContent)
-		if err != nil {
-			if strings.Contains(err.Error(), "HTTP 404 Not Found") {
-				// embed message no longer exists
-				msgNum, _ := strconv.ParseUint(emb[1], 10, 64)
-				err := db.RemoveEmbed(msgNum)
-				if err != nil {
-					slog.Error(fmt.Sprintf("404'd removing embed from db during update: %s", err))
-				}
-			} else {
-				log.Fatalf("Error updating embed: %v", err)
-			}
-		}
-	}
-}

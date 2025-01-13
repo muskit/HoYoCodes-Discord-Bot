@@ -148,6 +148,8 @@ func RemoveEmbed(messageID uint64) error {
 	return err
 }
 
+// elem[0] = channel ID
+// elem[1] = message ID
 func GetEmbeds(game string) ( [][]string, error ) {
 	ret := [][]string{}
 	sels, err := DBCfg.Query("SELECT channel_id, message_id FROM Embeds WHERE game = ?", game)

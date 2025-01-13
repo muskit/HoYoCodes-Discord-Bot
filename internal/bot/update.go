@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"log/slog"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -57,11 +59,37 @@ func updateCodesDB() {
 	}
 }
 
+func updateEmbedsRoutine(s *discordgo.Session, game string) {
+	embeds, err := db.GetEmbeds(game)
+	if err != nil {
+		log.Fatalf("Error getting embeds to update: %v", err)
+	}
+
+	embedContent := createEmbed(game)
+
+	for _, emb := range embeds {
+		channelID, messageID := emb[0], emb[1]
+		_, err = s.ChannelMessageEditEmbed(channelID, messageID, embedContent)
+		if err != nil {
+			if strings.Contains(err.Error(), "HTTP 404 Not Found") {
+				// embed message no longer exists -- delete from db
+				msgNum, _ := strconv.ParseUint(messageID, 10, 64)
+				err := db.RemoveEmbed(msgNum)
+				if err != nil {
+					slog.Error(fmt.Sprintf("404'd removing embed from db during update: %s", err))
+				}
+			} else {
+				log.Fatalf("Error updating embed: %v", err)
+			}
+		}
+	}
+}
+
 func updateEmbeds(session *discordgo.Session) {
 	slog.Debug("--- [Update Embeds] ---")
 	for _, ch := range GameChoices {
 		game := ch.Name
-		go UpdateGameEmbeds(session, game)
+		go updateEmbedsRoutine(session, game)
 	}
 }
 

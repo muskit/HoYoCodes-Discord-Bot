@@ -115,7 +115,7 @@ var (
 				},
 			},
 		},
-		/// CHANNEL CONFIGURATION ///
+		/// SUBSCRIPTIONS ///
 		{
 			Name: "subscribe",
 			Description: "Subscribe this channel to code activity news. Tracks all games by default; use /filter_games to set.",
@@ -161,6 +161,7 @@ var (
 		{
 			Name: "unsubscribe",
 			Description: "Unsubscribe a channel from all code announcements. Will leave channel configuration alone.",
+			DefaultMemberPermissions: &adminCmdFlag,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Name: "channel",
@@ -169,11 +170,11 @@ var (
 					Required: false,
 				},
 			},
-			DefaultMemberPermissions: &adminCmdFlag,
 		},
 		{
 			Name: "add_ping_role",
 			Description: "Adds a role that will be pinged.",
+			DefaultMemberPermissions: &adminCmdFlag,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Name: "role",
@@ -192,6 +193,7 @@ var (
 		{
 			Name: "remove_ping_role",
 			Description: "Remove a role from being pinged.",
+			DefaultMemberPermissions: &adminCmdFlag,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Name: "role",
@@ -207,6 +209,25 @@ var (
 				},
 			},
 		},
+		{
+			Name: "check_subscription",
+			Description: "Show subscription configuration for a channel.",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Name: "all_channels",
+					Description: "Show config for all channels in this server. Default: false",
+					Type: discordgo.ApplicationCommandOptionBoolean,
+					Required: false,
+				},
+				{
+					Name: "channel",
+					Description: "Channel to show config for. Default: current channel.",
+					Type: discordgo.ApplicationCommandOptionChannel,
+					Required: false,
+				},
+			},
+		},
+		/// EMBEDS ///
 		{
 			Name: "create_embed",
 			Description: "Create an embed that self-updates with active codes. Shows all games if none are specified.",
@@ -230,6 +251,7 @@ var (
 		{
 			Name: "delete_embed",
 			Description: "Delete a self-updating embed.",
+			DefaultMemberPermissions: &adminCmdFlag,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Name: "message_link",
@@ -240,12 +262,12 @@ var (
 			},
 		},
 		{
-			Name: "show_config",
-			Description: "Show subscription configuration for a channel.",
+			Name: "check_embeds",
+			Description: "Show all embeds present in a channel.",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Name: "all_channels",
-					Description: "Whether to show config for all channels in this server or not. Default: false",
+					Description: "Get all embeds present in the server. Default: false",
 					Type: discordgo.ApplicationCommandOptionBoolean,
 					Required: false,
 				},
@@ -268,10 +290,13 @@ var (
 					Type: discordgo.ApplicationCommandOptionBoolean,
 					Required: false,
 				},
-				optionalGameChoices[0],
-				optionalGameChoices[1],
-				optionalGameChoices[2],
-				optionalGameChoices[3],
+				{
+					Name: "game",
+					Description: "A game to check codes for.",
+					Type: discordgo.ApplicationCommandOptionString,
+					Choices: GameChoices,
+					Required: false,
+				},
 			},
 		},
 	}
