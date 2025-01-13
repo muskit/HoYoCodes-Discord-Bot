@@ -8,7 +8,6 @@ import (
 )
 
 func main() {
-	// var debugFlag bool
 	dbgFlag := flag.Bool("debug", false, "enable debug output")
 	flag.Parse()
 
