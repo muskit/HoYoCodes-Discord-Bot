@@ -1,7 +1,8 @@
 package scraper
 
 import (
-	"log"
+	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/gocolly/colly"
@@ -44,7 +45,9 @@ var Configs []ScrapeConfig = []ScrapeConfig{
 // Given a Project Tactics article containing MiHoYo game codes,
 // return a map of codes and their description, as well as
 // the datetime which the data was updated.
-func scrapePJT(url string, heading string) (map[string]string, string) {
+func ScrapePJT(cfg ScrapeConfig) (map[string]string, string) {
+	slog.Debug(fmt.Sprintf("[%s]\n", cfg.Game))
+
 	// scraped data
 	activeCodes := make(map[string]string)
 	datetime := ""
@@ -53,34 +56,32 @@ func scrapePJT(url string, heading string) (map[string]string, string) {
 
 	// --- callback setup ---
 	c.OnRequest(func(r *colly.Request) {
-		log.Printf("Visiting %s...\n", url)
+		slog.Debug(fmt.Sprintf("Visiting %s", cfg.URL))
 	})
-	log.Printf("Searching for \"%s\"", heading)
+	slog.Debug(fmt.Sprintf("Searching for \"%s\"", cfg.Heading))
 
 	// populate codes
 	c.OnHTML("strong, b", func(h *colly.HTMLElement) {
-		if strings.Contains(h.Text, heading) {
-			log.Printf("FOUND HEADER: %s\n", h.Text)
+		if strings.Contains(h.Text, cfg.Heading) {
+			slog.Debug("", "header", h.Text)
 			if strings.Contains(h.Text, "expire") {
-				log.Println("Appears to have expired according to header; stopping...")
+				slog.Debug("Appears to have expired according to header; stopping...")
 				return
 			}
 
-			log.Println("Gathering codes...")
+			slog.Debug("Gathering codes...")
 
 			listContainer := h.DOM.Parent().Next()
 			list := listContainer.Children()
 
-			for _, elem := range list.Nodes {
+			for i, elem := range list.Nodes {
 				entry := elem.FirstChild
 				key := entry.FirstChild.Data
 				desc := string([]rune(entry.NextSibling.Data)[3:])
 
 				activeCodes[key] = desc
-				// log.Printf("%d: [%s] (%s)\n", i, key, desc)
+				slog.Debug(fmt.Sprintf("%d: [%s] (%s)\n", i, key, desc))
 			}
-		} else {
-			// log.Printf("Didn't find \"%s\"\n", identifierText)
 		}
 	})
 
@@ -88,28 +89,20 @@ func scrapePJT(url string, heading string) (map[string]string, string) {
 	c.OnHTML("time", func(h *colly.HTMLElement) {
 		if h.DOM.HasClass("updated") {
 			datetime = h.Attr("datetime")
-			log.Printf("Update datetime: %s\n", datetime)
+			slog.Debug(fmt.Sprintf("Update datetime: %s", datetime))
 		}
 	})
 
 	// begin scrape
-	c.Visit(url)
+	c.Visit(cfg.URL)
 
 	// TODO: check that data to return is good
 
-	// log.Printf("%d codes", len(activeCodes))
+	slog.Debug(fmt.Sprintf("%d codes", len(activeCodes)))
 	if len(activeCodes) == 0 {
-		log.Println("WARNING: returning 0 codes!")
+		slog.Warn("Returning 0 codes!", "game", cfg.Game, "heading", cfg.Heading)
 	}
 
-	log.Println("done")
+	slog.Debug("Finished scraping.")
 	return activeCodes, datetime
-}
-
-func ScrapeGame(config ScrapeConfig) (map[string]string, string) {
-	log.Printf("--- [%s] ---\n", config.Game)
-	return scrapePJT(
-		config.URL,
-		config.Heading,
-	)
 }

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 	"strings"
 
@@ -44,13 +45,13 @@ func init() {
 	// read env
 	err := godotenv.Load()
 	if err != nil {
-		log.Printf("WARNING: could not load .env: %v", err)
+		slog.Warn("Could not load .env:", err)
 	}
 
-	log.Println("Initializing server config db...")
+	slog.Info("Initializing server config db...")
 	DBCfg = initDB(connStrCfg)
 
-	log.Println("Initializing scraper db...")
+	slog.Info("Initializing scraper db...")
 	DBScraper = initDB(connStrScraper)
 
 }

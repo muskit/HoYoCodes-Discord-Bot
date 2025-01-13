@@ -1,10 +1,13 @@
 package bot
 
 import (
+	"fmt"
 	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"strconv"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
@@ -296,11 +299,11 @@ func RespondPrivate(s *discordgo.Session, i *discordgo.InteractionCreate, str st
 }
 
 func RunBot() {
-	log.Println("Starting bot...")
+	slog.Info("Starting bot...")
 	// read env
 	err := godotenv.Load()
 	if err != nil {
-		log.Printf("WARNING: could not load .env: %v", err)
+		slog.Warn(fmt.Sprintf("Could not load .env: %v", err))
 	}
 
 	// get vars from env
@@ -317,7 +320,7 @@ func RunBot() {
 	if _, err = session.ApplicationCommandBulkOverwrite(appId, "", commands); err != nil {
 		log.Fatalf("Could not register commands: %s\n", err)
 	} else {
-		log.Println("Successfully registered commands!")
+		slog.Info("Successfully registered commands!")
 	}
 
 	// EVENT HANDLERS //
@@ -361,11 +364,11 @@ func RunBot() {
 		case "delete_embed":
 			HandleDeleteEmbed(s, i, opts)
 		default:
-			log.Printf("WARNING: tried to run an unimplemented command %v!!\n", data.Name)
+			slog.Warn(fmt.Sprintf("Tried to run an unimplemented command %s!!", data.Name))
 			if len(opts) > 0 {
-				log.Println("Command options:")
+				slog.Debug("Command options:")
 				for name, val := range opts {
-					log.Printf("%s=%v\n", name, val)
+					slog.Debug(fmt.Sprintf("%s=%v", name, val))
 				}
 			}
 			RespondPrivate(s, i, "command unimplemented")
@@ -375,18 +378,16 @@ func RunBot() {
 
 	// Bot ready
 	session.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
-		log.Printf("Logged in as %s", r.User.String())
+		slog.Info(fmt.Sprintf("Logged in as %s", r.User.String()))
 	})
 
-
-	// Run with callbacks configured! //
+	// Start Discord bot session with handlers set
 	err = session.Open()
 	if err != nil {
-		log.Fatalf("could not open session: %s", err)
+		log.Fatalf("Could not open Discord session: %s", err)
 	}
 
-	// update loop waits for intercept to shut down
-	go UpdateLoop(session)
+	go UpdateLoop(session, 2*time.Hour)
 
 	// wait for interrupt
 	intrpChan := make(chan os.Signal, 1)
@@ -394,13 +395,14 @@ func RunBot() {
 	<-intrpChan
 
 	if !UpdatingMutex.TryLock() {
-		log.Println("Waiting for current update to finish...")
+	slog.Info("Waiting until current update finishes to close...")
 		UpdatingMutex.Lock() // wait until update is over
 	}
 
-	// close session gracefully
+	slog.Info("Closing Discord session...")
 	err = session.Close()
 	if err != nil {
-		log.Printf("could not close session gracefully: %v", err)
+		slog.Warn(fmt.Sprintf("Could not close session gracefully: %v", err))
 	}
+	slog.Info("Discord session closed!")
 }
