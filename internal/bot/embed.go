@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/muskit/hoyocodes-discord-bot/internal/db"
@@ -64,7 +65,7 @@ func appendCodeFields(fields []*discordgo.MessageEmbedField, codes [][]string, g
 	return fields
 }
 
-func createEmbed(game string) *discordgo.MessageEmbed {
+func createEmbed(game string, willRefresh bool) *discordgo.MessageEmbed {
 	fields := []*discordgo.MessageEmbedField{}
 
 	// non-recent codes
@@ -115,9 +116,16 @@ func createEmbed(game string) *discordgo.MessageEmbed {
 	if err != nil {
 		log.Fatalf("Error getting update time for %v: %v", game, err)
 	}
+	footer := fmt.Sprintf("-# Checked <t:%v:R>; source updated <t:%v:R>.", checkTime.Unix(), updateTime.Unix())
+	if willRefresh {
+		refreshTime := checkTime.Add(2*time.Hour) // TODO: set update interval in config
+		footer += fmt.Sprintf("\n-# Refreshing in <t:%v:R>.", refreshTime.Unix())
+	} else {
+		footer += "\n-# This embed will not auto-refresh."
+	}
 	fields = append(fields,
 		&discordgo.MessageEmbedField{
-			Value: fmt.Sprintf("-# Checked <t:%v:R>; source updated <t:%v:R>.", checkTime.Unix(), updateTime.Unix()),
+			Value: footer,
 		},
 	)
 
@@ -139,7 +147,7 @@ func HandleCreateEmbed(s *discordgo.Session, i *discordgo.InteractionCreate, opt
 	channelID := GetChannelID(i, opts)
 	game := opts["game"].StringValue()
 
-	embed := createEmbed(game)
+	embed := createEmbed(game, true)
 	message, err := s.ChannelMessageSendEmbed(strconv.FormatUint(channelID, 10), embed)
 	if err != nil {
 		RespondPrivate(s, i, fmt.Sprintf("Error creating embed: %v", err))
@@ -204,14 +212,15 @@ func HandleDeleteEmbed(s *discordgo.Session, i *discordgo.InteractionCreate, opt
 
 func HandleActiveCodes(s *discordgo.Session, i *discordgo.InteractionCreate, opts CmdOptMap) {
 	game := opts["game"].StringValue()
-	embed := createEmbed(game)
+	embed := createEmbed(game, false)
 	resp := discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content: "Note: this embed will NOT auto-update. Please delete with `/delete_embed`.",
+			Content: "Note: this embed will NOT auto-update.",
 			Embeds: []*discordgo.MessageEmbed{
 				embed,
 			},
+			Flags: discordgo.MessageFlagsEphemeral,
 		},
 	}
 	s.InteractionRespond(i.Interaction, &resp)

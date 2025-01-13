@@ -64,7 +64,7 @@ func updateEmbedsRoutine(s *discordgo.Session, game string) {
 		log.Fatalf("Error getting embeds to update: %v", err)
 	}
 
-	embedContent := createEmbed(game)
+	embedContent := createEmbed(game, true)
 
 	for _, emb := range embeds {
 		channelID, messageID := emb[0], emb[1]

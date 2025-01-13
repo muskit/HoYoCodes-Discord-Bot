@@ -282,7 +282,7 @@ var (
 		/// MISC ///
 		{
 			Name: "active_codes",
-			Description: "Check the current active codes for specified game.",
+			Description: "Privately get the current active codes for a game.",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Name: "game",
