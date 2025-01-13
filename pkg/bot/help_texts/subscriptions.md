@@ -1,5 +1,4 @@
 ## Subscriptions
-
 Subscriptions work on a *per-channel* basis; **one channel gets on subscription**. Each subscription can be configured using the following commands:
 - `/subscribe`: Creates a subscription for a channel. This can be run on an already-subscribed channel to reconfigure it with the following options.
   - `announce_code_additions`: Determine if the subscription should notify of new codes being added. Default: `true`
