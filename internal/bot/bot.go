@@ -406,13 +406,13 @@ func RunBot() {
 		switch data.Name {
 		case "help":
 			handleHelp(s, i, opts)
-		case "subscribe_channel":
+		case "subscribe":
 			HandleSubscribe(s, i, opts)
-		case "unsubscribe_channel":
+		case "unsubscribe":
 			HandleUnsubscribe(s, i, opts)
 		case "filter_games":
 			HandleFilterGames(s, i, opts)
-		case "show_config":
+		case "check_subscription":
 			HandleShowSubscription(s, i, opts)
 		case "add_ping_role":
 			HandleAddPingRole(s, i, opts)
