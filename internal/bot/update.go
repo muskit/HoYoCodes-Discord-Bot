@@ -18,16 +18,17 @@ var UpdatingMutex sync.Mutex
 
 func UpdateLoop(session *discordgo.Session, waitFor time.Duration) {
 	for {
+		slog.Info("Beginning update loop...")
 		UpdatingMutex.Lock()
-		slog.Info("Running update loop...")
 		updateCodesDB()
 		updateEmbeds(session)
 		notifySubscribers(session)
 		UpdatingMutex.Unlock()
 
 		nextUpdateTime := time.Now().Add(waitFor)
-		slog.Info(fmt.Sprintf("Finished update loop! Running again %v from now at %v", waitFor, nextUpdateTime.Format(time.Kitchen)))
-		<-time.After(4*time.Hour)
+		slog.Info("Finished update loop!")
+		slog.Info(fmt.Sprintf("Sleeping for %v until %v", waitFor, nextUpdateTime.Format(time.Kitchen)))
+		<-time.After(time.Until(nextUpdateTime))
 	}
 }
 
