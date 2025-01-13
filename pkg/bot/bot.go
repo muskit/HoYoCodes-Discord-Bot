@@ -20,8 +20,33 @@ import (
 // <@&%s> = role
 
 var (
-	//go:embed help.md
-	HELP_TEXT string
+	//go:embed help_texts/intro.md
+	helpIntro string
+	//go:embed help_texts/subscriptions.md
+	helpSubscriptions string
+	//go:embed help_texts/embeds.md
+	helpEmbeds string
+
+	helpTexts = map[string]string {
+		"intro": helpIntro,
+		"subscriptions": helpSubscriptions,
+		"embeds": helpEmbeds,
+	}
+
+	helpChoices = []*discordgo.ApplicationCommandOptionChoice {
+		{
+			Name: "intro",
+			Value: "intro",
+		},
+		{
+			Name: "subscriptions",
+			Value: "subscriptions",
+		},
+		{
+			Name: "embeds",
+			Value: "embeds",
+		},
+	}
 
 	GameChoices = []*discordgo.ApplicationCommandOptionChoice {
 		{
@@ -78,8 +103,16 @@ var (
 	commands = []*discordgo.ApplicationCommand {
 		{
 			Name: "help",
-			Description: "Introduction on configuring the bot.",
-			DefaultMemberPermissions: &adminCmdFlag,
+			Description: "Get help on using the bot.",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Name: "page",
+					Description: "What aspect of the bot to get help on. Default: intro",
+					Type: discordgo.ApplicationCommandOptionString,
+					Required: false,
+					Choices: helpChoices,
+				},
+			},
 		},
 		/// CHANNEL CONFIGURATION ///
 		{
@@ -261,10 +294,6 @@ func interactionAuthor(i *discordgo.Interaction) *discordgo.User {
 	return i.User
 }
 
-func handleHelp(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	RespondPrivate(s, i, HELP_TEXT)
-}
-
 func GetChannelID(i *discordgo.InteractionCreate, opts CmdOptMap) uint64 {
 	id, _ := strconv.ParseUint(i.ChannelID, 10, 64)
 	if val, exists := opts["channel"]; exists {
@@ -296,6 +325,16 @@ func RespondPrivate(s *discordgo.Session, i *discordgo.InteractionCreate, str st
 	if err != nil {
 		log.Panicf("could not respond to interaction: %s", err)
 	}
+}
+
+func handleHelp(s *discordgo.Session, i *discordgo.InteractionCreate, opts CmdOptMap) {
+	page := "intro"
+	if ch, exists := opts["page"]; exists {
+		page = ch.StringValue()
+	}
+	text := helpTexts[page]
+	slog.Debug("pulled help page:\n", "page", page, "text", text)
+	RespondPrivate(s, i, helpTexts[page])
 }
 
 func RunBot() {
@@ -335,18 +374,18 @@ func RunBot() {
 		data := i.ApplicationCommandData()
 		opts := parseArgs(data.Options)
 
-		log.Printf("%s ran %s\n", interactionAuthor(i.Interaction), data.Name)
+		slog.Debug(fmt.Sprintf("%s ran %s\n", interactionAuthor(i.Interaction), data.Name))
 		if len(opts) > 0 {
-			log.Println("Command options:")
+			slog.Debug("Command options:")
 			for name, val := range opts {
-				log.Printf("%s=%v\n", name, val)
+				slog.Debug(fmt.Sprintf("%s=%v\n", name, val))
 			}
 		}
 
 		// Command matching
 		switch data.Name {
 		case "help":
-			handleHelp(s, i)
+			handleHelp(s, i, opts)
 		case "subscribe_channel":
 			HandleSubscribe(s, i, opts)
 		case "unsubscribe_channel":
