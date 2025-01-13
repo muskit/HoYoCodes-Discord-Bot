@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/cdfmlr/ellipsis"
 	"github.com/muskit/hoyocodes-discord-bot/internal/db"
 )
 
@@ -47,7 +48,7 @@ func appendCodeParam(redeemURL string, code string) string {
 	return redeemURL + "?code=" + code
 }
 
-func appendCodeFields(fields []*discordgo.MessageEmbedField, codes [][]string, game string) []*discordgo.MessageEmbedField {
+func appendCodeFields(slice []*discordgo.MessageEmbedField, codes [][]string, game string) []*discordgo.MessageEmbedField {
 	for _, code := range codes {
 		var val string
 		if url, exists := redeemURL[game]; exists {
@@ -56,101 +57,82 @@ func appendCodeFields(fields []*discordgo.MessageEmbedField, codes [][]string, g
 			val = code [1]
 		}
 
-		fields = append(fields, &discordgo.MessageEmbedField{
+		slice = append(slice, &discordgo.MessageEmbedField{
 			Name: code[0],
 			Value: val,
 			Inline: true,
 		})
 	}
-	return fields
+	return slice
 }
 
-func createEmbed(game string, willRefresh bool) *discordgo.MessageEmbed {
-	fields := []*discordgo.MessageEmbedField{}
+func codeList(codes [][]string, game string) string {
+	ret := ""
+	for _, elem := range codes {
+		var line string
+		code, description := elem[0], ellipsis.Ending(elem[1], 50)
+		line = fmt.Sprintf("- **%v** - %v", code, description)
+		ret += line + "\n"
+	}
+	return strings.Trim(ret, " \n	")
+}
+
+func createCodePrint(game string, willRefresh bool) string {
+	ret := "# " + game + "\n"
 
 	// non-recent codes
-	codes := db.GetCodes(game, false, false)
+	codes := db.GetCodes(game, false)
 	if len(codes) > 0 {
-		fields = append(fields,
-			&discordgo.MessageEmbedField{
-				Name: "--- Active Codes ---",
-			},
-		)
-		fields = appendCodeFields(fields, codes, game)
-	}
+		ret += "### Active Codes\n"
+		ret += codeList(codes, game) + "\n"
+	}	
 
-	codes = db.GetCodes(game, true, false)
+	// recent codes
+	codes = db.GetCodesRecent()
 	if len(codes) > 0 {
-		fields = append(fields,
-			&fieldSpacer,
-			&discordgo.MessageEmbedField{
-				Name: "--- Recently-Added Codes ---",
-			},
-		)
-		fields = appendCodeFields(fields, codes, game)
-	}
+		ret += "### Recently Added Codes\n"
+		ret += codeList(codes, game) + "\n"
+	}	
 
 	// livestream codes
-	codes = db.GetCodes(game, false, true)
+	codes = db.GetCodes(game, true)
 	if len(codes) > 0 {
-		fields = append(fields,
-			&fieldSpacer,
-			&discordgo.MessageEmbedField{
-				Name: "--- Livestream Codes ---",
-			},
-		)
-		fields = appendCodeFields(fields, codes, game)
-	}
+		ret += "### Livestream Codes (may expire sooner!)\n"
+		ret += codeList(codes, game) + "\n"
+	}	
 
+	// redemption shortcut
 	redeem, exists := redeemURL[game]
 	if exists {
-		fields = append(fields,
-			// &fieldSpacer,
-			&discordgo.MessageEmbedField{
-				Value: fmt.Sprintf("**[Redemption page](%v)**", redeem),
-			},
-		)
+		ret += fmt.Sprintf("**[Redemption page](<%v>)**\n", redeem)
 	}
 
+	// footer (stats & refresh time)
 	checkTime, updateTime, err := db.GetScrapeStats(game)
 	if err != nil {
 		log.Fatalf("Error getting update time for %v: %v", game, err)
 	}
-	footer := fmt.Sprintf("-# Checked <t:%v:R>; source updated <t:%v:R>.", checkTime.Unix(), updateTime.Unix())
+	footer := fmt.Sprintf("-# **Checked <t:%v:R>; [source](<%v>) updated <t:%v:R>.**\n", checkTime.Unix(), articleURL[game], updateTime.Unix())
 	if willRefresh {
 		refreshTime := checkTime.Add(2*time.Hour) // TODO: set update interval in config
-		footer += fmt.Sprintf("\n-# Refreshing in <t:%v:R>.", refreshTime.Unix())
+		footer += fmt.Sprintf("-# Refreshing in <t:%v:R>.\n", refreshTime.Unix())
 	} else {
-		footer += "\n-# This embed will not auto-refresh."
-	}
-	fields = append(fields,
-		&discordgo.MessageEmbedField{
-			Value: footer,
-		},
-	)
-
-	embed := &discordgo.MessageEmbed{
-		Color: color[game],
-		Title: game,
-		URL: articleURL[game],
-		Thumbnail: &discordgo.MessageEmbedThumbnail{
-			URL: image[game],
-		},
-		Fields: fields,
+		footer += "-# This ticker will not auto-refresh.\n"
 	}
 
-	return embed
+	ret += "\n" + footer
+
+	return ret
 }
 
-// returns message ID of embed
-func HandleCreateEmbed(s *discordgo.Session, i *discordgo.InteractionCreate, opts CmdOptMap) {
+func HandleCreateTicker(s *discordgo.Session, i *discordgo.InteractionCreate, opts CmdOptMap) {
 	channelID := GetChannelID(i, opts)
 	game := opts["game"].StringValue()
 
-	embed := createEmbed(game, true)
-	message, err := s.ChannelMessageSendEmbed(strconv.FormatUint(channelID, 10), embed)
+	content := createCodePrint(game, true)
+	message, err := s.ChannelMessageSend(strconv.FormatUint(channelID, 10), content)
 	if err != nil {
-		RespondPrivate(s, i, fmt.Sprintf("Error creating embed: %v", err))
+		RespondPrivate(s, i, fmt.Sprintf("Error creating ticker: %v", err))
 		return
 	}
 
@@ -158,14 +140,14 @@ func HandleCreateEmbed(s *discordgo.Session, i *discordgo.InteractionCreate, opt
 	err = db.AddEmbed(messageID, game, channelID)
 	if err != nil {
 		RespondPrivate(s, i, fmt.Sprintf(
-			"Created embed but can't save for updating: %v\n" +
-			"This embed will not update; please delete it and try again.", err))
+			"Created ticker but can't save for updating: %v\n" +
+			"This ticker will not update; please delete it and try again.", err))
 		return
 	}
-	RespondPrivate(s, i, fmt.Sprintf("Successfully created embed in <#%v> for %v!", channelID, game))
+	RespondPrivate(s, i, fmt.Sprintf("Successfully created ticker in <#%v> for %v!", channelID, game))
 }
 
-func HandleDeleteEmbed(s *discordgo.Session, i *discordgo.InteractionCreate, opts CmdOptMap) {
+func HandleDeleteTicker(s *discordgo.Session, i *discordgo.InteractionCreate, opts CmdOptMap) {
 	messageURL := opts["message_link"].StringValue()
 
 	url, err := url.Parse(messageURL)
@@ -202,24 +184,21 @@ func HandleDeleteEmbed(s *discordgo.Session, i *discordgo.InteractionCreate, opt
 
 	// remove message from DB
 	id, _ := strconv.ParseUint(messageID, 10, 64)
-	err = db.RemoveEmbed(id)
+	err = db.RemoveTicker(id)
 	if err != nil {
-		RespondPrivate(s, i, fmt.Sprintf("Error removing embed from tracking: %v", err))
+		RespondPrivate(s, i, fmt.Sprintf("Error removing ticker from tracking: %v", err))
 		return
 	}
-	RespondPrivate(s, i, "Embed successfully removed!")
+	RespondPrivate(s, i, "Ticker successfully removed!")
 }
 
 func HandleActiveCodes(s *discordgo.Session, i *discordgo.InteractionCreate, opts CmdOptMap) {
 	game := opts["game"].StringValue()
-	embed := createEmbed(game, false)
+	content := createCodePrint(game, false)
 	resp := discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content: "Note: this embed will NOT auto-update.",
-			Embeds: []*discordgo.MessageEmbed{
-				embed,
-			},
+			Content: content,
 			Flags: discordgo.MessageFlagsEphemeral,
 		},
 	}

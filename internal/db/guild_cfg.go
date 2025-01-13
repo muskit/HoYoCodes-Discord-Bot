@@ -143,7 +143,7 @@ func AddEmbed(messageID uint64, game string, channelID uint64) error {
 	return err
 }
 
-func RemoveEmbed(messageID uint64) error {
+func RemoveTicker(messageID uint64) error {
 	_, err := DBCfg.Exec("DELETE FROM Embeds WHERE message_id = ?", messageID)
 	return err
 }

@@ -6,6 +6,8 @@ import (
 	"log"
 	"log/slog"
 	"time"
+
+	"github.com/hashicorp/go-set/v3"
 )
 
 func AddCode(code string, game string, description string, livestream bool, foundTime time.Time) error {
@@ -18,16 +20,11 @@ func RemoveCode(code string) error {
 	return err
 }
 
-func GetCodes(game string, recent bool, livestream bool) [][]string {
+func GetCodes(game string, livestream bool) [][]string {
 	var sels *sql.Rows
 	var err error
 
-	if recent {
-		// TODO: figure criteria for if a code is "recent"
-		return [][]string{}
-	} else {
-		sels, err = DBScraper.Query("SELECT code, description FROM Codes WHERE game = ? AND is_livestream = ? ORDER BY added ASC", game, livestream)
-	}
+	sels, err = DBScraper.Query("SELECT code, description FROM Codes WHERE game = ? AND is_livestream = ? ORDER BY added ASC", game, livestream)
 	if err != nil {
 		log.Fatalf("Error trying to get codes for %v: %v", game, err)
 	}
@@ -44,6 +41,24 @@ func GetCodes(game string, recent bool, livestream bool) [][]string {
 	}
 
 	return codes
+}
+
+// Provided a set of codes, return which ones do not currently exist in the database.
+func GetCodesLeftDifference(codes *set.Set[string]) [][]string {
+	slog.Warn("TODO: db.GetCodesLeftDifference unimplemented")
+	return [][]string{}
+}
+
+// Provided a set of codes, return only the ones that are in the database.
+func GetCodesRightDifference(codes *set.Set[string]) [][]string {
+	slog.Warn("TODO: db.GetCodesRightDifference unimplemented")
+	return [][]string{}
+}
+
+// Return codes, sorted by new ascending, that were added within 24h of the newest code.
+func GetCodesRecent() [][]string {
+	slog.Warn("TODO: db.GetCodesRecent unimplemented")
+	return [][]string{}
 }
 
 func SetScrapeStats(game string, updated time.Time, checked time.Time) error {

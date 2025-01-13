@@ -229,45 +229,45 @@ var (
 		},
 		/// EMBEDS ///
 		{
-			Name: "create_embed",
-			Description: "Create an embed that self-updates with active codes. Shows all games if none are specified.",
+			Name: "create_ticker",
+			Description: "Create an ticker that self-updates with active codes. Shows all games if none are specified.",
 			DefaultMemberPermissions: &adminCmdFlag,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Name: "game",
-					Description: "Game to create embed for.",
+					Description: "Game to create ticker for.",
 					Type: discordgo.ApplicationCommandOptionString,
 					Choices: GameChoices,
 					Required: true,
 				},
 				{
 					Name: "channel",
-					Description: "Channel to create the embed. Default: current channel.",
+					Description: "Channel to create the ticker. Default: current channel.",
 					Type: discordgo.ApplicationCommandOptionChannel,
 					Required: false,
 				},
 			},
 		},
 		{
-			Name: "delete_embed",
-			Description: "Delete a self-updating embed.",
+			Name: "delete_ticker",
+			Description: "Delete a self-updating ticker.",
 			DefaultMemberPermissions: &adminCmdFlag,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Name: "message_link",
-					Description: "Link to message containing the embed.",
+					Description: "Link to message.",
 					Type: discordgo.ApplicationCommandOptionString,
 					Required: true,
 				},
 			},
 		},
 		{
-			Name: "check_embeds",
-			Description: "Show all embeds present in a channel.",
+			Name: "check_ticker",
+			Description: "Show all ticker present in a channel.",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Name: "all_channels",
-					Description: "Get all embeds present in the server. Default: false",
+					Description: "Get all ticker present in the server. Default: false",
 					Type: discordgo.ApplicationCommandOptionBoolean,
 					Required: false,
 				},
@@ -418,10 +418,10 @@ func RunBot() {
 			HandleAddPingRole(s, i, opts)
 		case "remove_ping_role":
 			HandleRemovePingRole(s, i, opts)
-		case "create_embed":
-			HandleCreateEmbed(s, i, opts)
-		case "delete_embed":
-			HandleDeleteEmbed(s, i, opts)
+		case "create_ticker":
+			HandleCreateTicker(s, i, opts)
+		case "delete_ticker":
+			HandleDeleteTicker(s, i, opts)
 		case "active_codes":
 			HandleActiveCodes(s, i, opts)
 		default:

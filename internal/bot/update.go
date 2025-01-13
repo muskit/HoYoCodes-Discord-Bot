@@ -16,12 +16,17 @@ import (
 
 var UpdatingMutex sync.Mutex
 
+type CodeChanges struct {
+	Added []string
+	Removed []string
+}
+
 func UpdateLoop(session *discordgo.Session, waitFor time.Duration) {
 	for {
 		slog.Info("Beginning update loop...")
 		UpdatingMutex.Lock()
 		updateCodesDB()
-		updateEmbeds(session)
+		updateTickers(session)
 		notifySubscribers(session)
 		UpdatingMutex.Unlock()
 
@@ -32,7 +37,7 @@ func UpdateLoop(session *discordgo.Session, waitFor time.Duration) {
 	}
 }
 
-func updateCodesDB() {
+func updateCodesDB() map[string]CodeChanges {
 	slog.Debug("--- [Update Code Database] ---")
 	for _, cfg := range scraper.Configs {
 		checkTime := time.Now()
@@ -57,39 +62,52 @@ func updateCodesDB() {
 			log.Fatalf("Error updating scrape stats for %v: %v", cfg.Game, err)
 		}
 	}
+	// TODO
+	return map[string]CodeChanges{}
 }
 
-func updateEmbedsRoutine(s *discordgo.Session, game string) {
-	embeds, err := db.GetEmbeds(game)
+func updateTickersRoutine(s *discordgo.Session, game string) {
+	tickers, err := db.GetEmbeds(game)
 	if err != nil {
-		log.Fatalf("Error getting embeds to update: %v", err)
+		log.Fatalf("Error getting tickers: %v", err)
 	}
 
-	embedContent := createEmbed(game, true)
+	slog.Debug("", "game", game)
+	content := createCodePrint(game, true)
+	slog.Debug("", "length", len(content))
+	slog.Debug(content)
 
-	for _, emb := range embeds {
+	for _, emb := range tickers {
 		channelID, messageID := emb[0], emb[1]
-		_, err = s.ChannelMessageEditEmbed(channelID, messageID, embedContent)
-		if err != nil {
+		
+		// update ticker
+		edit := discordgo.MessageEdit{
+			Channel: channelID,
+			ID: messageID,
+			Content: &content,
+			Embeds: &[]*discordgo.MessageEmbed{}, // delete old embed if still there
+		}
+		// if _, err := s.ChannelMessageEdit(channelID, messageID, content, ); err != nil {
+		if _, err := s.ChannelMessageEditComplex(&edit); err != nil {
 			if strings.Contains(err.Error(), "HTTP 404 Not Found") {
-				// embed message no longer exists -- delete from db
+				// message no longer exists -- delete from db
 				msgNum, _ := strconv.ParseUint(messageID, 10, 64)
-				err := db.RemoveEmbed(msgNum)
+				err := db.RemoveTicker(msgNum)
 				if err != nil {
-					slog.Error(fmt.Sprintf("404'd removing embed from db during update: %s", err))
+					slog.Error(fmt.Sprintf("404'd removing ticker from db during update: %s", err))
 				}
 			} else {
-				log.Fatalf("Error updating embed: %v", err)
+				log.Fatalf("Error updating ticker: %v", err)
 			}
 		}
 	}
 }
 
-func updateEmbeds(session *discordgo.Session) {
-	slog.Debug("--- [Update Embeds] ---")
+func updateTickers(session *discordgo.Session) {
+	slog.Debug("--- [Update Tickers] ---")
 	for _, ch := range GameChoices {
 		game := ch.Name
-		go updateEmbedsRoutine(session, game)
+		updateTickersRoutine(session, game)
 	}
 }
 
