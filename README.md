@@ -13,3 +13,4 @@ sql_pass=
 ## TODO
 - Implement subscription notifications
 - Make commands more intuitive
+- Reduce and simplify database interactions w/ models
