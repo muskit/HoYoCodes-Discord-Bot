@@ -11,7 +11,7 @@ This bot will notify you of new goods code releases for *HoYoverse* games in two
 
 Check out the other `/help` pages to explore other aspects of the bot.
 
-You can also DM this bot to set up your own personalized notifications!
+Run `/active_codes` to get the current active codes shown to you privately. You can also DM this bot to set up your own personalized notifications!
 
 -# Developed by [muskit](https://muskit.net). Goods codes activity reporting by [PocketTactics](<https://www.pockettactics.com>).  
 -# This application is not affiliated with *MiHoYo* or *PocketTactics*.
