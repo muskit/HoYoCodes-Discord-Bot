@@ -1,6 +1,7 @@
 package bot
 
 import (
+	_ "embed"
 	"fmt"
 	"log"
 	"log/slog"
@@ -19,6 +20,9 @@ import (
 // <@&%s> = role
 
 var (
+	//go:embed help.md
+	HELP_TEXT string
+
 	GameChoices = []*discordgo.ApplicationCommandOptionChoice {
 		{
 			Name: "Honkai Impact 3rd",
@@ -250,18 +254,14 @@ func parseArgs(options []*discordgo.ApplicationCommandInteractionDataOption) (om
 	return
 }
 
+func interactionAuthor(i *discordgo.Interaction) *discordgo.User {
+	if i.Member != nil {
+		return i.Member.User
+	}
+	return i.User
+}
+
 func handleHelp(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	HELP_TEXT := (
-		"**Welcome to HoyoCodes!**\n\n"+
-		"This bot will notify you of new goods code releases for MiHoYo games in two different formats:\n"+
-		"- Auto-updating status embeds that list all codes reported to be active and usable\n"+
-		"  - `/create_embed`, `/delete_embed`\n"+
-		"- Channel subscriptions that notify when new codes are added and/or removed\n"+
-		"  - `/subscribe`, `/unsubscribe`, `/filter_games`, `/add_ping_role`, `/remove_ping_role`\n\n"+
-		"As you're setting up subscriptions and embeds with these commands, use `/show_config` to check your configuration work so far.\n\n"+
-		"Feel free to DM me and set up your own personalized notifications!\n\n"+
-		"-# Developed by [muskit](https://muskit.net).\n"+
-		"-# Code reporting provided by [PocketTactics](<https://www.pockettactics.com>).")
 	RespondPrivate(s, i, HELP_TEXT)
 }
 
@@ -335,13 +335,13 @@ func RunBot() {
 		data := i.ApplicationCommandData()
 		opts := parseArgs(data.Options)
 
-		// log.Printf("%s ran %s\n", interactionAuthor(i.Interaction), data.Name)
-		// if len(opts) > 0 {
-		// 	log.Println("Command options:")
-		// 	for name, val := range opts {
-		// 		log.Printf("%s=%v\n", name, val)
-		// 	}
-		// }
+		log.Printf("%s ran %s\n", interactionAuthor(i.Interaction), data.Name)
+		if len(opts) > 0 {
+			log.Println("Command options:")
+			for name, val := range opts {
+				log.Printf("%s=%v\n", name, val)
+			}
+		}
 
 		// Command matching
 		switch data.Name {
