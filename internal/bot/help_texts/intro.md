@@ -7,11 +7,11 @@ This bot will notify you of new goods code releases for *HoYoverse* games in two
 - Channel **subscriptions** that notify when new codes are added and/or removed 
   - **NOTE: you can only subscribe for now; notifications don't work just yet!**
 
-**Admins**: use `/check_subscription` to check your work as you're setting up subscriptions, as well as `/check_embeds` (**NOT IMPLEMENTED**) while setting up embeds. 
+**Admins**: use `/check_subscription` to check your work as you're setting up subscriptions, as well as `/check_embeds` (**NOT YET IMPLEMENTED**) while setting up embeds. 
 
 Check out the other `/help` pages to explore other aspects of the bot.
 
-Run `/active_codes` to get the current active codes shown to you privately. You can also DM this bot to set up your own personalized notifications!
+Run `/active_codes` (**NOT YET IMPLEMENTED**) to get the current active codes shown to you privately. You can also DM this bot to set up your own personalized notifications!
 
 -# Developed by [muskit](https://muskit.net). Goods codes activity reporting by [PocketTactics](<https://www.pockettactics.com>).  
 -# This application is not affiliated with *MiHoYo* or *PocketTactics*.
