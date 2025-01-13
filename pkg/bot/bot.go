@@ -116,7 +116,7 @@ var (
 		},
 		/// CHANNEL CONFIGURATION ///
 		{
-			Name: "subscribe_channel",
+			Name: "subscribe",
 			Description: "Subscribe this channel to code activity news. Tracks all games by default; use /filter_games to set.",
 			DefaultMemberPermissions: &adminCmdFlag,
 			Options: []*discordgo.ApplicationCommandOption{
@@ -158,7 +158,7 @@ var (
 			},
 		},
 		{
-			Name: "unsubscribe_channel",
+			Name: "unsubscribe",
 			Description: "Unsubscribe a channel from all code announcements. Will leave channel configuration alone.",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
