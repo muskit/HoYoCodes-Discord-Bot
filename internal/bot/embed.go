@@ -175,7 +175,19 @@ func HandleDeleteEmbed(s *discordgo.Session, i *discordgo.InteractionCreate, opt
 
 	channelID := path[2]
 	messageID := path[3]
-	if err := s.ChannelMessageDelete(channelID, messageID); err != nil {
+
+	// message deletion abuse prevention
+	msg, err := s.ChannelMessage(channelID, messageID)
+	if err != nil {
+		RespondPrivate(s, i, fmt.Sprintf("Couldn't fetch message: %v", err))
+		return
+	}
+	if msg.Author.String() != s.State.User.String() {
+		RespondPrivate(s, i, "Can't delete message as I didn't make it!")
+		return
+	}
+
+	if err = s.ChannelMessageDelete(channelID, messageID); err != nil {
 		RespondPrivate(s, i, fmt.Sprintf("Error deleting message %v: %v", messageID, err))
 		return
 	}

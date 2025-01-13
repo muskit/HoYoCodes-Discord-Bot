@@ -419,7 +419,7 @@ func RunBot() {
 		case "filter_games":
 			HandleFilterGames(s, i, opts)
 		case "show_config":
-			HandleShowConfig(s, i, opts)
+			HandleShowSubscription(s, i, opts)
 		case "add_ping_role":
 			HandleAddPingRole(s, i, opts)
 		case "remove_ping_role":

@@ -155,7 +155,7 @@ func HandleRemovePingRole(s *discordgo.Session, i *discordgo.InteractionCreate, 
 	RespondPrivate(s, i, fmt.Sprintf("Successfully removed ping role <@&%v> from <#%v>!", roleID, channelID))
 }
 
-func getConfigPrint(sub *db.Subscription) string {
+func getSubsPrint(sub *db.Subscription) string {
 	const TEMPLATE string = (
 		"# <#%v>\n"+
 		"**Active:** %v\n"+
@@ -191,7 +191,7 @@ func getConfigPrint(sub *db.Subscription) string {
 	return fmt.Sprintf(TEMPLATE, sub.ChannelID, sub.Active, sub.PingOnAdds, sub.PingOnRems, gameList, roleList)
 }
 
-func HandleShowConfig(s *discordgo.Session, i *discordgo.InteractionCreate, opts CmdOptMap) {
+func HandleShowSubscription(s *discordgo.Session, i *discordgo.InteractionCreate, opts CmdOptMap) {
 	if i.GuildID != "" { // don't run in DM environment
 		if allChan := opts["all_channels"]; allChan != nil && allChan.BoolValue() {
 			guildID, _ := strconv.ParseUint(i.GuildID, 10, 64)
@@ -203,9 +203,9 @@ func HandleShowConfig(s *discordgo.Session, i *discordgo.InteractionCreate, opts
 				return
 			}
 			
-			result := fmt.Sprintf("**Configuration for server ID %v**\n", i.GuildID)
+			result := fmt.Sprintf("**Subscriptions in server ID %v**\n", i.GuildID)
 			for _, ch := range channels {
-				result += getConfigPrint(&ch) + "\n"
+				result += getSubsPrint(&ch) + "\n"
 			}
 			RespondPrivate(s, i, result)
 			return
@@ -224,5 +224,5 @@ func HandleShowConfig(s *discordgo.Session, i *discordgo.InteractionCreate, opts
 		return 
 	} 
 
-	RespondPrivate(s, i, getConfigPrint(info))
+	RespondPrivate(s, i, getSubsPrint(info))
 }
