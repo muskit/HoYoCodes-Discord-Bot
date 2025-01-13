@@ -12,6 +12,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
+	"github.com/muskit/hoyocodes-discord-bot/pkg/db"
 )
 
 // <@%s> = user
@@ -444,4 +445,8 @@ func RunBot() {
 		slog.Warn(fmt.Sprintf("Could not close session gracefully: %v", err))
 	}
 	slog.Info("Discord session closed!")
+
+	slog.Info("Closing database connections...")
+	db.Close()
+	slog.Info("Database connections closed!")
 }
