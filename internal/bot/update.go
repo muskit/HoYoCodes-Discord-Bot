@@ -23,18 +23,18 @@ type CodeChanges struct {
 	Removed [][]string
 }
 
-func UpdateRoutine(session *discordgo.Session, waitFor time.Duration) {
+func UpdateRoutine(session *discordgo.Session) {
 	for {
 		slog.Info("Beginning update loop...")
 		UpdatingMutex.Lock()
 		changes := updateCodesDB()
-		updateTickers(session, waitFor)
+		updateTickers(session)
 		notifySubscribers(session, changes, false)
 		UpdatingMutex.Unlock()
 
-		nextUpdateTime := time.Now().Add(waitFor)
+		nextUpdateTime := time.Now().Add(consts.UpdateInterval)
 		slog.Info("Finished update loop!")
-		slog.Info(fmt.Sprintf("Sleeping for %v until %v", waitFor, nextUpdateTime.Format(time.Kitchen)))
+		slog.Info(fmt.Sprintf("Sleeping for %v until %v", consts.UpdateInterval, nextUpdateTime.Format(time.Kitchen)))
 		<-time.After(time.Until(nextUpdateTime))
 	}
 }
@@ -118,13 +118,12 @@ func updateCodesDB() map[string]*CodeChanges {
 	return changes
 }
 
-func updateTickers(session *discordgo.Session, loopInterval time.Duration) {
+func updateTickers(session *discordgo.Session) {
 	slog.Info("Update Tickers")
-
-	refreshTime := time.Now().Add(loopInterval)
+	
 	for _, g := range consts.Games {
 		game := g
-		UpdateTickersGame(session, game, refreshTime)
+		UpdateTickersGame(session, game)
 	}
 }
 

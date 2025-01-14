@@ -14,7 +14,7 @@ import (
 	"github.com/muskit/hoyocodes-discord-bot/pkg/util"
 )
 
-func tickerContent(game string, willRefresh bool, refreshTime time.Time) string {
+func tickerContent(game string, willRefresh bool) string {
 	ret := (
 		"## " + game + "\n"+
 		"**Active Codes**\n")
@@ -52,6 +52,7 @@ func tickerContent(game string, willRefresh bool, refreshTime time.Time) string 
 	}
 	footer := fmt.Sprintf("-# Checked <t:%v:R>; [source](<%v>) updated <t:%v:R>.\n", checkTime.Unix(), consts.ArticleURL[game], updateTime.Unix())
 	if willRefresh {
+		refreshTime := time.Now().Add(consts.UpdateInterval)
 		footer += fmt.Sprintf("-# Refreshing in <t:%v:R>.\n", refreshTime.Unix())
 	} else {
 		footer += "-# This ticker will not auto-refresh.\n"
@@ -62,14 +63,14 @@ func tickerContent(game string, willRefresh bool, refreshTime time.Time) string 
 	return ret
 }
 
-func UpdateTickersGame(s *discordgo.Session, game string, refreshTime time.Time) {
+func UpdateTickersGame(s *discordgo.Session, game string) {
 	tickers, err := db.GetTickers(game)
 	if err != nil {
 		log.Fatalf("Error getting tickers: %v", err)
 	}
 
 	slog.Debug("", "game", game)
-	content := tickerContent(game, true, refreshTime)
+	content := tickerContent(game, true)
 	slog.Debug("", "len(content)", len(content))
 	// slog.Debug(fmt.Sprintf("Content is as follows:\n%v", content))
 

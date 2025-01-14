@@ -1,5 +1,7 @@
 package consts
 
+import "time"
+
 var Games = []string{
 	"Honkai Impact 3rd",
 	"Genshin Impact",
@@ -19,3 +21,5 @@ var ArticleURL map[string]string = map[string]string{
 	"Honkai Star Rail": "https://www.pockettactics.com/honkai-star-rail/codes",
 	"Zenless Zone Zero": "https://www.pockettactics.com/zenless-zone-zero/codes",
 }
+
+var UpdateInterval = 2 * time.Hour

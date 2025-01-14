@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
-	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
@@ -448,7 +447,7 @@ func RunBot() {
 		log.Fatalf("Could not open Discord session: %s", err)
 	}
 
-	go UpdateRoutine(session, 2*time.Hour)
+	go UpdateRoutine(session)
 
 	// wait for interrupt
 	intrpChan := make(chan os.Signal, 1)
