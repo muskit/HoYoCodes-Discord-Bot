@@ -1,10 +1,6 @@
 package db
 
 import (
-	"database/sql"
-	"fmt"
-	"log"
-
 	"github.com/hashicorp/go-set/v3"
 )
 
@@ -61,11 +57,6 @@ func GetSubscriptionsFromGuild(guildID uint64) ([]Subscription, error) {
 	var announceAdds bool
 	var announceRems bool
 	for sels.Next() {
-		err = sels.Err()
-		if err != nil {
-			return result, err
-		}
-
 		sels.Scan(&channel_id, &active, &announceAdds, &announceRems)
 		result = append(result, Subscription{
 			ChannelID: channel_id,
@@ -73,6 +64,10 @@ func GetSubscriptionsFromGuild(guildID uint64) ([]Subscription, error) {
 			AnnounceAdds: announceAdds,
 			AnnounceRems: announceRems,
 		})
+	}
+	err = sels.Err()
+	if err != nil {
+		return result, err
 	}
 
 	return result, nil
@@ -92,9 +87,6 @@ func GetGameSubscriptions(game string) ([]Subscription, error) {
 	}
 
 	for sels.Next() {
-		if sels.Err() != nil {
-			return result, err
-		}
 		var channel_id uint64
 		var active bool
 		var announceAdds bool
@@ -107,6 +99,9 @@ func GetGameSubscriptions(game string) ([]Subscription, error) {
 			AnnounceAdds: announceAdds,
 			AnnounceRems: announceRems,
 		})
+	}
+	if sels.Err() != nil {
+		return result, sels.Err()
 	}
 
 	nofilterQ := `
@@ -120,9 +115,6 @@ func GetGameSubscriptions(game string) ([]Subscription, error) {
 	}
 
 	for sels.Next() {
-		if sels.Err() != nil {
-			return result, err
-		}
 		var channel_id uint64
 		var active bool
 		var announceAdds bool
@@ -136,6 +128,10 @@ func GetGameSubscriptions(game string) ([]Subscription, error) {
 			AnnounceRems: announceRems,
 		})
 	}
+	if sels.Err() != nil {
+		return result, sels.Err()
+	}
+
 	return result, nil
 }
 
@@ -158,12 +154,13 @@ func GetPingRoles(channelID uint64) ([]uint64, error) {
 	results := []uint64{}
 	var val uint64
 	for rows.Next() {
-		if rows.Err() != nil {
-			return results, err
-		}
 		rows.Scan(&val)
 		results = append(results, val)
 	}
+	if rows.Err() != nil {
+		return results, rows.Err()
+	}
+
 	return results, nil
 }
 
@@ -190,12 +187,14 @@ func GetSubscriptionGames(channelID uint64) ([]string, error) {
 	results := []string{}
 	var val string
 	for rows.Next() {
-		if rows.Err() != nil {
-			return results, err
-		}
+		
 		rows.Scan(&val)
 		results = append(results, val)
 	}
+	if rows.Err() != nil {
+		return results, rows.Err()
+	}
+
 	return results, nil
 }
 
@@ -219,59 +218,14 @@ func GetEmbeds(game string) ( [][]string, error ) {
 	}
 
 	for sels.Next() {
-		if err = sels.Err(); err != nil {
-			return ret, err
-		}
 		channelID := ""
 		messageID := ""
 		sels.Scan(&channelID, &messageID)
 		ret = append(ret, []string{channelID, messageID})
 	}
+	if err = sels.Err(); err != nil {
+		return ret, err
+	}
+
 	return ret, nil
-}
-
-//// REMOVE ////
-type GuildAdmin struct {
-	GuildID uint64
-	RoleID uint64
-}
-
-func AddGuildAdmin(guildID uint64, roleID uint64) error {
-	// TODO: handle duplicate
-	_, err := DBCfg.Exec("INSERT INTO GuildAdmins VALUES (?, ?)", guildID, roleID)
-	if err != nil {
-		log.Printf("ERROR: could not add GuildAdmin: %v", err)
-	}
-	return err
-}
-
-func IsGuildAdmin(guildID uint64, roleID uint64) (bool, error) {
-	row := DBCfg.QueryRow("SELECT * FROM GuildAdmins WHERE guild_id = ? AND role_id = ?", guildID, roleID)
-	
-	var foundGID uint64
-	var foundRID uint64
-	if err := row.Scan(&foundGID, &foundRID); err != nil {
-		if err == sql.ErrNoRows {
-			return false, nil
-		}
-		return false, err
-	}
-	return true, nil
-}
-
-func GetGuildAdmins() ([]GuildAdmin, error) {
-	var Ret []GuildAdmin
-	rows, err := DBCfg.Query("SELECT * FROM GuildAdmins")
-	if err != nil {
-        return nil, fmt.Errorf("error reading GuildAdmins: %v", err)
-    }
-
-	for rows.Next() {
-		var guildID uint64
-		var roleId uint64
-		rows.Scan(&guildID, &roleId)
-		Ret = append(Ret, GuildAdmin{guildID, roleId})
-	}
-
-	return Ret, nil
 }

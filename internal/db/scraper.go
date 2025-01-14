@@ -6,8 +6,6 @@ import (
 	"log"
 	"log/slog"
 	"time"
-
-	"github.com/hashicorp/go-set/v3"
 )
 
 // get code recency options
@@ -47,7 +45,7 @@ func GetCodes(game string, recency CodeRecencyOption, livestream bool) [][]strin
 		if rerr != nil {
 			log.Fatalf("Error getting most recent code time for %v: %v", game, rerr)
 		}
-		// select codes added within 24 hours before the most recent
+		// get codes added within 24 hours before the most recent
 		oldestTime := recentTime.Add(-24 * time.Hour)
 		sels, err = DBScraper.Query("SELECT code, description FROM Codes WHERE game = ? AND is_livestream = ? AND added >= ? ORDER BY added ASC", game, livestream, oldestTime)
 	case UnrecentCodes:
@@ -68,32 +66,33 @@ func GetCodes(game string, recency CodeRecencyOption, livestream bool) [][]strin
 	var code string
 	var description string
 	for sels.Next() {
-		if err = sels.Err(); err != nil {
-			log.Fatalf("Error reading code row for %v: %v", game, err)
-		}
 		sels.Scan(&code, &description)
 		codes = append(codes, []string{code, description})
+	}
+	if err = sels.Err(); err != nil {
+		log.Fatalf("Error reading code row for %v: %v", game, err)
 	}
 
 	return codes
 }
 
-// Provided a set of codes, return which ones do not currently exist in the database.
-func GetCodesLeftDifference(codes *set.Set[string]) [][]string {
-	slog.Warn("TODO: db.GetCodesLeftDifference unimplemented")
-	return [][]string{}
-}
+func GetRemovedCodes(codes []string) ([][]string, error) {
+	result := [][]string{}
+	sels, err := DBScraper.Query("SELECT code, description FROM Codes WHERE code NOT IN ?", codes)
+	if err != nil {
+		return result, err
+	}
+	
+	for sels.Next() {
+		var code, desc string
+		sels.Scan(&code, &desc)
+		result = append(result, []string{code, desc})
+	}
+	if sels.Err() != nil {
+		return result, sels.Err()
+	}
 
-// Provided a set of codes, return only the ones that are in the database.
-func GetCodesRightDifference(codes *set.Set[string]) [][]string {
-	slog.Warn("TODO: db.GetCodesRightDifference unimplemented")
-	return [][]string{}
-}
-
-// Return codes, sorted by new ascending, that were added within 24h of the newest code.
-func GetCodesRecent() [][]string {
-	slog.Warn("TODO: db.GetCodesRecent unimplemented")
-	return [][]string{}
+	return result, err
 }
 
 func SetScrapeStats(game string, updated time.Time, checked time.Time) error {

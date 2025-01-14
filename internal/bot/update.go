@@ -191,7 +191,6 @@ func notifySubscribers(session *discordgo.Session, changes map[string]*CodeChang
 				content += fmt.Sprintf("\n[Redemption page](%v)\n", link)
 			}
 
-			// TODO: footer
 			footer := fmt.Sprintf("-# Checked <t:%v:R>; [source](<%v>) updated <t:%v:R>.\n", checkTime.Unix(), articleURL[game], updateTime.Unix())
 			content += footer
 
