@@ -44,12 +44,14 @@ func updateCodesDB() map[string]*CodeChanges {
 	for _, cfg := range scraper.Configs {
 		checkTime := time.Now()
 		var updateTime time.Time
+		pageCodes := []string{}
 
 		livestream := false
 		for i := 0; i < 2; i++ { // get w/o, then w/ livestream
 			codes, updateTimeStr := scraper.ScrapePJT(cfg)
 			updateTime, _ = time.Parse(time.RFC3339, updateTimeStr)
 			for code, desc := range codes {
+				pageCodes = append(pageCodes, code)
 				if err := db.AddCode(code, cfg.Game, desc, livestream, updateTime); err != nil {
 					if !db.IsDuplicateErr(err) {
 						log.Fatalf("Error adding code to database: %v\n", err)
@@ -61,7 +63,6 @@ func updateCodesDB() map[string]*CodeChanges {
 						changes[cfg.Game] = &CodeChanges{}
 					}
 					changes[cfg.Game].Added = append(changes[cfg.Game].Added, []string{code, desc})
-					slog.Debug("", "changes", changes, "key", cfg.Game, "val", changes[cfg.Game])
 				}
 			}
 			// set for next check
@@ -69,25 +70,41 @@ func updateCodesDB() map[string]*CodeChanges {
 			livestream = true
 		}
 
-		if err := db.SetScrapeStats(cfg.Game, updateTime, checkTime); err != nil {
-			log.Fatalf("Error updating scrape stats for %v: %v", cfg.Game, err)
+
+		// TODO: code removals
+		removed, err := db.GetRemovedCodes(pageCodes, cfg.Game, true)
+		if err != nil {
+			log.Fatalf("Error getting removed codes for %v: %v", cfg.Game, err)
+		}
+		if len(removed) > 0 {
+			if _, exists := changes[cfg.Game]; !exists {
+				changes[cfg.Game] = &CodeChanges{}
+			}
+			for _, elem := range removed {
+				code, desc := elem[0], elem[1]
+				changes[cfg.Game].Removed = append(changes[cfg.Game].Removed, []string{code, desc})
+			}
+		}
+
+		if err := db.SetScrapeTimes(cfg.Game, updateTime, checkTime); err != nil {
+			log.Fatalf("Error updating scrape times for %v: %v", cfg.Game, err)
 		}
 	}
 
-	// TODO: code removals
-
-	slog.Debug(fmt.Sprintf("%v", changes))
+	// slog.Debug(fmt.Sprintf("%v", changes))
 	for game, chg := range changes {
 		slog.Debug(fmt.Sprintf("Changes for %v:", game))
 		if len(chg.Added) > 0 {
 			slog.Debug("Added:")
-			for code, desc := range chg.Added {
+			for _, elem := range chg.Added {
+				code, desc := elem[0], elem[1]
 				slog.Debug("", "code", code, "desc", desc)
 			}
 		}
 		if len(chg.Removed) > 0 {
 			slog.Debug("Removed:")
-			for code, desc := range chg.Removed {
+			for _, elem := range chg.Removed {
+				code, desc := elem[0], elem[1]
 				slog.Debug("", "code", code, "desc", desc)
 			}
 		}

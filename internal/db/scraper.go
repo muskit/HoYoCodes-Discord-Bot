@@ -76,9 +76,19 @@ func GetCodes(game string, recency CodeRecencyOption, livestream bool) [][]strin
 	return codes
 }
 
-func GetRemovedCodes(codes []string) ([][]string, error) {
+func GetRemovedCodes(codes []string, game string, removeFromDB bool) ([][]string, error) {
 	result := [][]string{}
-	sels, err := DBScraper.Query("SELECT code, description FROM Codes WHERE code NOT IN ?", codes)
+	codesPlaceholder := Placeholders(len(codes))
+
+	// convert to any slice
+	queryArgs := make([]any, len(codes) + 1)
+	queryArgs[0] = game
+	for i, v := range codes {
+		queryArgs[i+1] = v
+	}
+
+	q := fmt.Sprintf("SELECT code, description FROM Codes WHERE game = ? AND code NOT IN (%s)", codesPlaceholder)
+	sels, err := DBScraper.Query(q, queryArgs...)
 	if err != nil {
 		return result, err
 	}
@@ -86,16 +96,22 @@ func GetRemovedCodes(codes []string) ([][]string, error) {
 	for sels.Next() {
 		var code, desc string
 		sels.Scan(&code, &desc)
+		fmt.Printf("Found removed code: %v\n", code)
 		result = append(result, []string{code, desc})
 	}
 	if sels.Err() != nil {
 		return result, sels.Err()
 	}
 
+	if removeFromDB {
+		q := fmt.Sprintf("DELETE FROM Codes WHERE game = ? AND code IN (%s)", codesPlaceholder)
+		_, err = DBScraper.Exec(q, queryArgs...)
+	}
+
 	return result, err
 }
 
-func SetScrapeStats(game string, updated time.Time, checked time.Time) error {
+func SetScrapeTimes(game string, updated time.Time, checked time.Time) error {
 	row := DBScraper.QueryRow("SELECT game FROM ScrapeStats WHERE game = ?", game)
 	
 	var z string // temp unused var for existence checking

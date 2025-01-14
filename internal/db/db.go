@@ -21,6 +21,13 @@ var DBScraper *sql.DB
 func IsDuplicateErr(err error) bool {
 	return strings.Contains(err.Error(), "Error 1062 (23000): Duplicate entry")
 }
+func Placeholders(n int) string {
+    ps := make([]string, n)
+    for i := 0; i < n; i++ {
+        ps[i] = "?"
+    }
+    return strings.Join(ps, ",")
+}
 
 func initDB(connStr string) *sql.DB {
 	var ret *sql.DB
