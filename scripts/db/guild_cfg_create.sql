@@ -5,8 +5,8 @@ CREATE TABLE `Subscriptions` (
   `channel_id` BIGINT UNSIGNED PRIMARY KEY,
   `guild_id` BIGINT UNSIGNED COMMENT 'For server-wide config checking.',
   `active` BOOL DEFAULT true,
-  `ping_on_code_add` BOOL DEFAULT true,
-  `ping_on_code_remove` BOOL DEFAULT false
+  `announce_additions` BOOL DEFAULT true,
+  `announce_removals` BOOL DEFAULT false
 );
 
 CREATE TABLE `SubscriptionGames` (

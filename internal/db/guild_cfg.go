@@ -11,17 +11,17 @@ import (
 type Subscription struct {
 	ChannelID uint64
 	Active bool
-	PingOnAdds bool
-	PingOnRems bool
+	AnnounceAdds bool
+	AnnounceRems bool
 }
 
 func CreateSubscription(channelID uint64, guildID uint64, additions bool, removals bool) error {
-	_, err := DBCfg.Exec("INSERT INTO Subscriptions SET channel_id = ?, guild_id = ?, ping_on_code_add = ?, ping_on_code_remove = ?", channelID, guildID, additions, removals)
+	_, err := DBCfg.Exec("INSERT INTO Subscriptions SET channel_id = ?, guild_id = ?, announce_additions = ?, announce_removals = ?", channelID, guildID, additions, removals)
 	return err
 }
 
 func UpdateSubscription(channelID uint64, additions bool, removals bool) error {
-	_, err := DBCfg.Exec("UPDATE Subscriptions SET ping_on_code_add = ?, ping_on_code_remove = ?, active = true WHERE channel_id = ?", additions, removals, channelID)
+	_, err := DBCfg.Exec("UPDATE Subscriptions SET announce_additions = ?, announce_removals = ?, active = true WHERE channel_id = ?", additions, removals, channelID)
 	return err
 }
 
@@ -32,49 +32,110 @@ func DeactivateSubscription(channelID uint64) error {
 }
 
 func GetSubscription(channelID uint64) (*Subscription, error) {
-	var pingOnAdd bool
-	var pingOnRem bool
+	var announceAdds bool
+	var announceRems bool
 	var active bool
-	s := DBCfg.QueryRow("SELECT ping_on_code_add, ping_on_code_remove, active FROM Subscriptions WHERE channel_id = ?", channelID)
-	if err := s.Scan(&pingOnAdd, &pingOnRem, &active); err != nil {
+	s := DBCfg.QueryRow("SELECT announce_additions, announce_removals, active FROM Subscriptions WHERE channel_id = ?", channelID)
+	if err := s.Scan(&announceAdds, &announceRems, &active); err != nil {
 		return nil, err
 	}
 
 	return &Subscription{
 		ChannelID: channelID,
 		Active: active,
-		PingOnAdds: pingOnAdd,
-		PingOnRems: pingOnRem,
+		AnnounceAdds: announceAdds,
+		AnnounceRems: announceRems,
 	}, nil
 }
 
 func GetSubscriptionsFromGuild(guildID uint64) ([]Subscription, error) {
 	result := []Subscription{}
 
-	sels, err := DBCfg.Query("SELECT channel_id, active, ping_on_code_add, ping_on_code_remove FROM Subscriptions WHERE guild_id = ?", guildID)
+	sels, err := DBCfg.Query("SELECT channel_id, active, announce_additions, announce_removals FROM Subscriptions WHERE guild_id = ?", guildID)
 	if err != nil {
 		return result, err
 	}
 
 	var channel_id uint64
 	var active bool
-	var pingAdd bool
-	var pingRem bool
+	var announceAdds bool
+	var announceRems bool
 	for sels.Next() {
 		err = sels.Err()
 		if err != nil {
 			return result, err
 		}
 
-		sels.Scan(&channel_id, &active, &pingAdd, &pingRem)
+		sels.Scan(&channel_id, &active, &announceAdds, &announceRems)
 		result = append(result, Subscription{
 			ChannelID: channel_id,
 			Active: active,
-			PingOnAdds: pingAdd,
-			PingOnRems: pingRem,
+			AnnounceAdds: announceAdds,
+			AnnounceRems: announceRems,
 		})
 	}
 
+	return result, nil
+}
+
+func GetGameSubscriptions(game string) ([]Subscription, error) {
+	result := []Subscription{}
+
+	filteredQ := `
+	SELECT Subscriptions.channel_id, active, announce_additions, announce_removals FROM Subscriptions
+	JOIN SubscriptionGames ON SubscriptionGames.channel_id=Subscriptions.channel_id
+	WHERE SubscriptionGames.game = ? AND active = TRUE;
+	`
+	sels, err := DBCfg.Query(filteredQ, game)
+	if err != nil {
+		return result, err
+	}
+
+	for sels.Next() {
+		if sels.Err() != nil {
+			return result, err
+		}
+		var channel_id uint64
+		var active bool
+		var announceAdds bool
+		var announceRems bool
+
+		sels.Scan(&channel_id, &active, &announceAdds, &announceRems)
+		result = append(result, Subscription{
+			ChannelID: channel_id,
+			Active: active,
+			AnnounceAdds: announceAdds,
+			AnnounceRems: announceRems,
+		})
+	}
+
+	nofilterQ := `
+	SELECT Subscriptions.channel_id, active, announce_additions, announce_removals FROM Subscriptions
+	LEFT JOIN SubscriptionGames ON SubscriptionGames.channel_id = Subscriptions.channel_id
+	WHERE game IS NULL AND Subscriptions.active = TRUE;
+	`
+	sels, err = DBCfg.Query(nofilterQ)
+	if err != nil {
+		return result, err
+	}
+
+	for sels.Next() {
+		if sels.Err() != nil {
+			return result, err
+		}
+		var channel_id uint64
+		var active bool
+		var announceAdds bool
+		var announceRems bool
+
+		sels.Scan(&channel_id, &active, &announceAdds, &announceRems)
+		result = append(result, Subscription{
+			ChannelID: channel_id,
+			Active: active,
+			AnnounceAdds: announceAdds,
+			AnnounceRems: announceRems,
+		})
+	}
 	return result, nil
 }
 

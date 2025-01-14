@@ -159,8 +159,8 @@ func getSubsPrint(sub *db.Subscription) string {
 	const TEMPLATE string = (
 		"# <#%v>\n"+
 		"**Active:** %v\n"+
-		"**Ping on additions:** %v\n"+
-		"**Ping on removals:** %v\n"+
+		"**Announce additions:** %v\n"+
+		"**Announce removals:** %v\n"+
 		"**Game filter:**\n"+
 		"%v" + 
 		"**Roles to ping:**\n"+
@@ -188,7 +188,7 @@ func getSubsPrint(sub *db.Subscription) string {
 	}
 	roleList = strings.Trim(roleList, " \n")
 
-	return fmt.Sprintf(TEMPLATE, sub.ChannelID, sub.Active, sub.PingOnAdds, sub.PingOnRems, gameList, roleList)
+	return fmt.Sprintf(TEMPLATE, sub.ChannelID, sub.Active, sub.AnnounceAdds, sub.AnnounceRems, gameList, roleList)
 }
 
 func HandleShowSubscription(s *discordgo.Session, i *discordgo.InteractionCreate, opts CmdOptMap) {

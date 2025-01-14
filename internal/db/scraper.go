@@ -117,7 +117,8 @@ func SetScrapeStats(game string, updated time.Time, checked time.Time) error {
 	return err
 }
 
-func GetScrapeStats(game string) (time.Time, time.Time, error) {
+// Returns time scraped, time source updated, and db read error.
+func GetScrapeTimes(game string) (time.Time, time.Time, error) {
 	var checked time.Time
 	var updated time.Time
 	row := DBScraper.QueryRow("SELECT checked, updated FROM ScrapeStats WHERE game = ?", game)

@@ -46,7 +46,7 @@ var Configs []ScrapeConfig = []ScrapeConfig{
 // return a map of codes and their description, as well as
 // the datetime which the data was updated.
 func ScrapePJT(cfg ScrapeConfig) (map[string]string, string) {
-	slog.Debug(fmt.Sprintf("[%s]\n", cfg.Game))
+	slog.Debug(fmt.Sprintf("[%s] - %s\n", cfg.Game, cfg.Heading))
 
 	// scraped data
 	activeCodes := make(map[string]string)
@@ -58,7 +58,6 @@ func ScrapePJT(cfg ScrapeConfig) (map[string]string, string) {
 	c.OnRequest(func(r *colly.Request) {
 		slog.Debug(fmt.Sprintf("Visiting %s", cfg.URL))
 	})
-	slog.Debug(fmt.Sprintf("Searching for \"%s\"", cfg.Heading))
 
 	// populate codes
 	c.OnHTML("strong, b", func(h *colly.HTMLElement) {
@@ -74,13 +73,13 @@ func ScrapePJT(cfg ScrapeConfig) (map[string]string, string) {
 			listContainer := h.DOM.Parent().Next()
 			list := listContainer.Children()
 
-			for i, elem := range list.Nodes {
+			for _, elem := range list.Nodes {
 				entry := elem.FirstChild
 				key := entry.FirstChild.Data
 				desc := string([]rune(entry.NextSibling.Data)[3:])
 
 				activeCodes[key] = desc
-				slog.Debug(fmt.Sprintf("%d: [%s] (%s)\n", i, key, desc))
+				// slog.Debug(fmt.Sprintf("%d: [%s] (%s)\n", i, key, desc))
 			}
 		}
 	})

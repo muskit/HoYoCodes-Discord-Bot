@@ -160,7 +160,7 @@ var (
 		},
 		{
 			Name: "unsubscribe",
-			Description: "Unsubscribe a channel from all code announcements. Will leave channel configuration alone.",
+			Description: "Unsubscribe a channel from all code announcements. Will leave subscription settings alone.",
 			DefaultMemberPermissions: &adminCmdFlag,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
@@ -227,7 +227,7 @@ var (
 				},
 			},
 		},
-		/// EMBEDS ///
+		/// TICKERS ///
 		{
 			Name: "create_ticker",
 			Description: "Create an ticker that self-updates with active codes. Shows all games if none are specified.",
@@ -262,7 +262,7 @@ var (
 			},
 		},
 		{
-			Name: "check_ticker",
+			Name: "check_tickers",
 			Description: "Show all ticker present in a channel.",
 			Options: []*discordgo.ApplicationCommandOption{
 				{

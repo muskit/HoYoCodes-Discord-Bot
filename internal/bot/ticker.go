@@ -40,7 +40,7 @@ var redeemURL map[string]string = map[string]string{
 	"Zenless Zone Zero": "https://zenless.hoyoverse.com/redemption",
 }
 
-func codeList(codes [][]string, game string) string {
+func CodeListing(codes [][]string) string {
 	ret := ""
 	for _, elem := range codes {
 		var line string
@@ -59,21 +59,21 @@ func createCodePrint(game string, willRefresh bool) string {
 	// non-recent codes
 	codes := db.GetCodes(game, db.UnrecentCodes, false)
 	if len(codes) > 0 {
-		ret += codeList(codes, game) + "\n"
+		ret += CodeListing(codes) + "\n"
 	}	
 
 	// recent codes
 	codes = db.GetCodes(game, db.RecentCodes, false)
 	if len(codes) > 0 {
 		ret += "\n**Added Last Update**\n"
-		ret += codeList(codes, game) + "\n"
+		ret += CodeListing(codes) + "\n"
 	}	
 
 	// livestream codes
 	codes = db.GetCodes(game, db.AllCodes, true)
 	if len(codes) > 0 {
 		ret += "\n**Livestream (use ASAP; may expire sooner!)**\n"
-		ret += codeList(codes, game) + "\n"
+		ret += CodeListing(codes) + "\n"
 	}	
 
 	// redemption shortcut
@@ -83,7 +83,7 @@ func createCodePrint(game string, willRefresh bool) string {
 	}
 
 	// footer (stats & refresh time)
-	checkTime, updateTime, err := db.GetScrapeStats(game)
+	checkTime, updateTime, err := db.GetScrapeTimes(game)
 	if err != nil {
 		log.Fatalf("Error getting update time for %v: %v", game, err)
 	}
