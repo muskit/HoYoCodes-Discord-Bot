@@ -45,40 +45,41 @@ func codeList(codes [][]string, game string) string {
 	for _, elem := range codes {
 		var line string
 		code, description := elem[0], ellipsis.Ending(elem[1], 50)
-		line = fmt.Sprintf("- **%v** - %v", code, description)
+		line = fmt.Sprintf("- `%v` - %v", code, description)
 		ret += line + "\n"
 	}
 	return strings.Trim(ret, " \n	")
 }
 
 func createCodePrint(game string, willRefresh bool) string {
-	ret := "# " + game + "\n"
+	ret := (
+		"## " + game + "\n"+
+		"**Active Codes**\n")
 
 	// non-recent codes
 	codes := db.GetCodes(game, db.UnrecentCodes, false)
 	if len(codes) > 0 {
-		ret += "## Active Codes\n"
 		ret += codeList(codes, game) + "\n"
 	}	
 
 	// recent codes
 	codes = db.GetCodes(game, db.RecentCodes, false)
 	if len(codes) > 0 {
-		ret += "### Added Last Update\n"
+		ret += "\n**Added Last Update**\n"
 		ret += codeList(codes, game) + "\n"
 	}	
 
 	// livestream codes
 	codes = db.GetCodes(game, db.AllCodes, true)
 	if len(codes) > 0 {
-		ret += "### Livestream Codes (use ASAP; may expire sooner!)\n"
+		ret += "\n**Livestream (use ASAP; may expire sooner!)**\n"
 		ret += codeList(codes, game) + "\n"
 	}	
 
 	// redemption shortcut
 	redeem, exists := redeemURL[game]
 	if exists {
-		ret += fmt.Sprintf("**[Redemption page](<%v>)**\n", redeem)
+		ret += fmt.Sprintf("\n**[Redemption Shortcut](<%v>)**", redeem)
 	}
 
 	// footer (stats & refresh time)
@@ -86,7 +87,7 @@ func createCodePrint(game string, willRefresh bool) string {
 	if err != nil {
 		log.Fatalf("Error getting update time for %v: %v", game, err)
 	}
-	footer := fmt.Sprintf("-# **Checked <t:%v:R>; [source](<%v>) updated <t:%v:R>.**\n", checkTime.Unix(), articleURL[game], updateTime.Unix())
+	footer := fmt.Sprintf("-# Checked <t:%v:R>; [source](<%v>) updated <t:%v:R>.\n", checkTime.Unix(), articleURL[game], updateTime.Unix())
 	if willRefresh {
 		refreshTime := checkTime.Add(2*time.Hour) // TODO: set update interval in config
 		footer += fmt.Sprintf("-# Refreshing in <t:%v:R>.\n", refreshTime.Unix())
