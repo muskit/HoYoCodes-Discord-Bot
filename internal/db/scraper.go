@@ -10,6 +10,12 @@ import (
 	"github.com/hashicorp/go-set/v3"
 )
 
+// get code recency options
+type CodeRecencyOption uint8
+const AllCodes CodeRecencyOption = 0
+const RecentCodes CodeRecencyOption = 1
+const UnrecentCodes CodeRecencyOption = 2
+
 func AddCode(code string, game string, description string, livestream bool, foundTime time.Time) error {
 	_, err := DBScraper.Exec("INSERT INTO Codes SET code = ?, game = ?, description = ?, is_livestream = ?, added = ?", code, game, description, livestream, foundTime)
 	return err
@@ -20,16 +26,45 @@ func RemoveCode(code string) error {
 	return err
 }
 
-func GetCodes(game string, livestream bool) [][]string {
+func GetMostRecentCodeTime(game string) (time.Time, error) {
+	var time time.Time
+	sel := DBScraper.QueryRow("SELECT added FROM Codes WHERE game = ? ORDER BY added DESC", game)
+	err := sel.Scan(&time)
+	return time, err
+}
+
+func GetCodes(game string, recency CodeRecencyOption, livestream bool) [][]string {
 	var sels *sql.Rows
 	var err error
+	codes := [][]string{}
 
-	sels, err = DBScraper.Query("SELECT code, description FROM Codes WHERE game = ? AND is_livestream = ? ORDER BY added ASC", game, livestream)
+	switch recency {
+	case AllCodes:
+		sels, err = DBScraper.Query("SELECT code, description FROM Codes WHERE game = ? AND is_livestream = ? ORDER BY added ASC", game, livestream)
+	case RecentCodes:
+		// get most recent code's added datetime
+		recentTime, rerr := GetMostRecentCodeTime(game)
+		if rerr != nil {
+			log.Fatalf("Error getting most recent code time for %v: %v", game, rerr)
+		}
+		// select codes added within 24 hours before the most recent
+		oldestTime := recentTime.Add(-24 * time.Hour)
+		sels, err = DBScraper.Query("SELECT code, description FROM Codes WHERE game = ? AND is_livestream = ? AND added >= ? ORDER BY added ASC", game, livestream, oldestTime)
+	case UnrecentCodes:
+		// get most recent code's added datetime
+		recentTime, rerr := GetMostRecentCodeTime(game)
+		if rerr != nil {
+			log.Fatalf("Error getting most recent code time for %v: %v", game, err)
+		}
+		// select codes added older than 24 hours before the most recent
+		oldestTime := recentTime.Add(-24 * time.Hour)
+		sels, err = DBScraper.Query("SELECT code, description FROM Codes WHERE game = ? AND is_livestream = ? AND added < ? ORDER BY added ASC", game, livestream, oldestTime)
+	}
+	
 	if err != nil {
-		log.Fatalf("Error trying to get codes for %v: %v", game, err)
+		log.Fatalf("Error querying codes of recency %v: %v", recency, err)
 	}
 
-	codes := [][]string{}
 	var code string
 	var description string
 	for sels.Next() {

@@ -55,23 +55,23 @@ func createCodePrint(game string, willRefresh bool) string {
 	ret := "# " + game + "\n"
 
 	// non-recent codes
-	codes := db.GetCodes(game, false)
+	codes := db.GetCodes(game, db.UnrecentCodes, false)
 	if len(codes) > 0 {
-		ret += "### Active Codes\n"
+		ret += "## Active Codes\n"
 		ret += codeList(codes, game) + "\n"
 	}	
 
 	// recent codes
-	codes = db.GetCodesRecent()
+	codes = db.GetCodes(game, db.RecentCodes, false)
 	if len(codes) > 0 {
-		ret += "### Recently Added Codes\n"
+		ret += "### Added Last Update\n"
 		ret += codeList(codes, game) + "\n"
 	}	
 
 	// livestream codes
-	codes = db.GetCodes(game, true)
+	codes = db.GetCodes(game, db.AllCodes, true)
 	if len(codes) > 0 {
-		ret += "### Livestream Codes (may expire sooner!)\n"
+		ret += "### Livestream Codes (use ASAP; may expire sooner!)\n"
 		ret += codeList(codes, game) + "\n"
 	}	
 
