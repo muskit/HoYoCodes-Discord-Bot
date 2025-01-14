@@ -165,7 +165,7 @@ func notifySubscribers(session *discordgo.Session, changes map[string]*CodeChang
 	slog.Info("Notify Subscribed Channels")
 
 	for game, chg := range changes {
-		checkTime, updateTime, err := db.GetScrapeTimes(game)
+		_, updateTime, err := db.GetScrapeTimes(game)
 		if err != nil {
 			log.Fatalf("Error getting scrape times for %v: %v", game, err)
 		}
@@ -211,7 +211,7 @@ func notifySubscribers(session *discordgo.Session, changes map[string]*CodeChang
 				content += fmt.Sprintf("\n[Redemption page](%v)\n", link)
 			}
 
-			footer := fmt.Sprintf("-# Checked <t:%v:R>; [source](<%v>) updated <t:%v:R>.\n", checkTime.Unix(), articleURL[game], updateTime.Unix())
+			footer := fmt.Sprintf("-# [source](<%v>) updated <t:%v:R>.\n", articleURL[game], updateTime.Unix())
 			content += footer
 
 			slog.Debug(fmt.Sprintf("for %v:\n%s", sub.ChannelID, content))

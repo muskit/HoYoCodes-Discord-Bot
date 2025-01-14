@@ -44,7 +44,7 @@ func CodeListing(codes [][]string) string {
 	ret := ""
 	for _, elem := range codes {
 		var line string
-		code, description := elem[0], ellipsis.Ending(elem[1], 50)
+		code, description := elem[0], ellipsis.Ending(elem[1], 20)
 		line = fmt.Sprintf("- `%v` - %v", code, description)
 		ret += line + "\n"
 	}
