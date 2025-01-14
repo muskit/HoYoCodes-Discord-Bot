@@ -84,6 +84,10 @@ func updateCodesDB() map[string]*CodeChanges {
 				code, desc := elem[0], elem[1]
 				changes[cfg.Game].Removed = append(changes[cfg.Game].Removed, []string{code, desc})
 			}
+			
+			if err := db.RemoveCodes(removed, cfg.Game); err != nil {
+				log.Fatalf("Error deleting removed codes from db: %v", err)
+			}
 		}
 
 		if err := db.SetScrapeTimes(cfg.Game, updateTime, checkTime); err != nil {
