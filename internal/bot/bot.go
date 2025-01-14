@@ -448,7 +448,7 @@ func RunBot() {
 		log.Fatalf("Could not open Discord session: %s", err)
 	}
 
-	go UpdateLoop(session, 2*time.Hour)
+	go UpdateRoutine(session, 2*time.Hour)
 
 	// wait for interrupt
 	intrpChan := make(chan os.Signal, 1)
@@ -467,7 +467,5 @@ func RunBot() {
 	}
 	slog.Info("Discord session closed!")
 
-	slog.Info("Closing database connections...")
 	db.Close()
-	slog.Info("Database connections closed!")
 }

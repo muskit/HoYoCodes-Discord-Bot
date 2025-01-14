@@ -12,16 +12,18 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/muskit/hoyocodes-discord-bot/internal/db"
 	"github.com/muskit/hoyocodes-discord-bot/internal/scraper"
+	"github.com/muskit/hoyocodes-discord-bot/pkg/consts"
+	"github.com/muskit/hoyocodes-discord-bot/pkg/util"
 )
 
-var UpdatingMutex sync.Mutex
+var UpdatingMutex = sync.Mutex{}
 
 type CodeChanges struct {
 	Added [][]string
 	Removed [][]string
 }
 
-func UpdateLoop(session *discordgo.Session, waitFor time.Duration) {
+func UpdateRoutine(session *discordgo.Session, waitFor time.Duration) {
 	for {
 		slog.Info("Beginning update loop...")
 		UpdatingMutex.Lock()
@@ -116,52 +118,20 @@ func updateCodesDB() map[string]*CodeChanges {
 	return changes
 }
 
-func updateTickersRoutine(s *discordgo.Session, game string) {
-	tickers, err := db.GetTickers(game)
-	if err != nil {
-		log.Fatalf("Error getting tickers: %v", err)
-	}
-
-	slog.Debug("", "game", game)
-	content := createCodePrint(game, true)
-	slog.Debug("", "len(content)", len(content))
-	// slog.Debug(fmt.Sprintf("Content is as follows:\n%v", content))
-
-	for _, emb := range tickers {
-		channelID, messageID := emb[0], emb[1]
-		
-		// update ticker
-		edit := discordgo.MessageEdit{
-			Channel: channelID,
-			ID: messageID,
-			Content: &content,
-			Embeds: &[]*discordgo.MessageEmbed{}, // delete old embed if still there
-		}
-		// if _, err := s.ChannelMessageEdit(channelID, messageID, content, ); err != nil {
-		if _, err := s.ChannelMessageEditComplex(&edit); err != nil {
-			if strings.Contains(err.Error(), "HTTP 404 Not Found") {
-				// message no longer exists -- delete from db
-				msgNum, _ := strconv.ParseUint(messageID, 10, 64)
-				err := db.RemoveTicker(msgNum)
-				if err != nil {
-					slog.Error(fmt.Sprintf("404'd removing ticker from db during update: %s", err))
-				}
-			} else {
-				log.Fatalf("Error updating ticker: %v", err)
-			}
-		}
-	}
-}
-
 func updateTickers(session *discordgo.Session) {
 	slog.Info("Update Tickers")
-	for _, ch := range GameChoices {
-		game := ch.Name
-		updateTickersRoutine(session, game)
+	for _, g := range consts.Games {
+		game := g
+		UpdateTickersGame(session, game)
 	}
 }
 
 func notifySubscribers(session *discordgo.Session, changes map[string]*CodeChanges, dryrun bool) {
+	if len(changes) == 0 {
+		slog.Info("No changes to notify subscribers of")
+		return
+	}
+
 	slog.Info("Notify Subscribed Channels")
 
 	for game, chg := range changes {
@@ -200,18 +170,18 @@ func notifySubscribers(session *discordgo.Session, changes map[string]*CodeChang
 			content += fmt.Sprintf("## Codes updated for %v!\n", game)
 			if len(chg.Added) > 0 {
 				content += "**NEW:**\n"
-				content += CodeListing(chg.Added) + "\n"
+				content += util.CodeListing(chg.Added) + "\n"
 			}
 			if len(chg.Removed) > 0 {
 				content += "**REMOVED:**\n"
-				content += CodeListing(chg.Removed) + "\n"
+				content += util.CodeListing(chg.Removed) + "\n"
 			}
 
-			if link, exists := redeemURL[game]; exists {
+			if link, exists := consts.RedeemURL[game]; exists {
 				content += fmt.Sprintf("\n[Redemption page](%v)\n", link)
 			}
 
-			footer := fmt.Sprintf("-# [source](<%v>) updated <t:%v:R>.\n", articleURL[game], updateTime.Unix())
+			footer := fmt.Sprintf("-# [source](<%v>) updated <t:%v:R>.\n", consts.ArticleURL[game], updateTime.Unix())
 			content += footer
 
 			slog.Debug(fmt.Sprintf("for %v:\n%s", sub.ChannelID, content))

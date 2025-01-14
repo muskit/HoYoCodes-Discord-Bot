@@ -18,15 +18,19 @@ const connStrScraper = "%s:%s@tcp(%s:%s)/scraper?parseTime=true"
 var DBCfg *sql.DB
 var DBScraper *sql.DB
 
-func IsDuplicateErr(err error) bool {
-	return strings.Contains(err.Error(), "Error 1062 (23000): Duplicate entry")
-}
-func Placeholders(n int) string {
-    ps := make([]string, n)
-    for i := 0; i < n; i++ {
-        ps[i] = "?"
-    }
-    return strings.Join(ps, ",")
+func init() {
+	// read env
+	err := godotenv.Load()
+	if err != nil {
+		slog.Warn(fmt.Sprintf("Could not load .env: %v", err))
+	}
+
+	slog.Info("Initializing server config db...")
+	DBCfg = initDB(connStrCfg)
+
+	slog.Info("Initializing scraper db...")
+	DBScraper = initDB(connStrScraper)
+
 }
 
 func initDB(connStr string) *sql.DB {
@@ -48,26 +52,27 @@ func initDB(connStr string) *sql.DB {
 	return ret
 }
 
-func init() {
-	// read env
-	err := godotenv.Load()
-	if err != nil {
-		slog.Warn(fmt.Sprintf("Could not load .env: %v", err))
-	}
+func IsDuplicateErr(err error) bool {
+	return strings.Contains(err.Error(), "Error 1062 (23000): Duplicate entry")
+}
 
-	slog.Info("Initializing server config db...")
-	DBCfg = initDB(connStrCfg)
-
-	slog.Info("Initializing scraper db...")
-	DBScraper = initDB(connStrScraper)
-
+func Placeholders(n int) string {
+    ps := make([]string, n)
+    for i := 0; i < n; i++ {
+        ps[i] = "?"
+    }
+    return strings.Join(ps, ",")
 }
 
 func Close() {
+	slog.Info("Closing database connections...")
+
 	if err := DBCfg.Close(); err != nil {
-		slog.Warn(fmt.Sprintf("Error closing guild_cfg db: %v", err))
+		slog.Error(fmt.Sprintf("Error closing guild_cfg db: %v", err))
 	}
 	if err := DBScraper.Close(); err != nil {
-		slog.Warn(fmt.Sprintf("Error closing scraper db: %v", err))
+		slog.Error(fmt.Sprintf("Error closing scraper db: %v", err))
 	}
+
+	slog.Info("Database connections closed!")
 }
