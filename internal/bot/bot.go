@@ -442,7 +442,7 @@ func RunBot() {
 		slog.Info(fmt.Sprintf("Logged in as %s", r.User.String()))
 	})
 
-	// Start Discord bot session with handlers set
+	// Start Discord bot session with handlers set //
 	err = session.Open()
 	if err != nil {
 		log.Fatalf("Could not open Discord session: %s", err)

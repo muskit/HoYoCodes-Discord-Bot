@@ -28,7 +28,7 @@ func UpdateRoutine(session *discordgo.Session, waitFor time.Duration) {
 		slog.Info("Beginning update loop...")
 		UpdatingMutex.Lock()
 		changes := updateCodesDB()
-		updateTickers(session)
+		updateTickers(session, waitFor)
 		notifySubscribers(session, changes, false)
 		UpdatingMutex.Unlock()
 
@@ -118,11 +118,13 @@ func updateCodesDB() map[string]*CodeChanges {
 	return changes
 }
 
-func updateTickers(session *discordgo.Session) {
+func updateTickers(session *discordgo.Session, loopInterval time.Duration) {
 	slog.Info("Update Tickers")
+
+	refreshTime := time.Now().Add(loopInterval)
 	for _, g := range consts.Games {
 		game := g
-		UpdateTickersGame(session, game)
+		UpdateTickersGame(session, game, refreshTime)
 	}
 }
 
