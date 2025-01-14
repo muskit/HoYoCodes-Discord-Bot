@@ -71,7 +71,6 @@ func updateCodesDB() map[string]*CodeChanges {
 		}
 
 
-		// TODO: code removals
 		removed, err := db.GetRemovedCodes(pageCodes, cfg.Game, true)
 		if err != nil {
 			log.Fatalf("Error getting removed codes for %v: %v", cfg.Game, err)
