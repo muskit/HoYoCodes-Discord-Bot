@@ -103,9 +103,20 @@ func GetRemovedCodes(codes []string, game string, removeFromDB bool) ([][]string
 		return result, sels.Err()
 	}
 
+	// needed as otherwise would cause an error on delete command below
+	if len(result) == 0 {
+		return result, err
+	}
+
 	if removeFromDB {
-		q := fmt.Sprintf("DELETE FROM Codes WHERE game = ? AND code IN (%s)", codesPlaceholder)
-		_, err = DBScraper.Exec(q, queryArgs...)
+		deleteArgs := make([]any, len(result) + 1)
+		deleteArgs[0] = game
+		for i, v := range result {
+			deleteArgs[i+1] = v[0]
+		}
+
+		q := fmt.Sprintf("DELETE FROM Codes WHERE game = ? AND code IN (%s)", Placeholders(len(result)))
+		_, err = DBScraper.Exec(q, deleteArgs...)
 	}
 
 	return result, err
