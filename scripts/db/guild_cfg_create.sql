@@ -21,7 +21,7 @@ CREATE TABLE `SubscriptionPingRoles` (
   PRIMARY KEY (`channel_id`, `role_id`)
 );
 
-CREATE TABLE `Embeds` (
+CREATE TABLE `Tickers` (
   `message_id` BIGINT UNSIGNED PRIMARY KEY,
   `game` ENUM ('Honkai Impact 3rd', 'Genshin Impact', 'Honkai Star Rail', 'Zenless Zone Zero'),
   `channel_id` BIGINT UNSIGNED

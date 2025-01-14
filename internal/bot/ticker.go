@@ -112,7 +112,7 @@ func HandleCreateTicker(s *discordgo.Session, i *discordgo.InteractionCreate, op
 	}
 
 	messageID, _ := strconv.ParseUint(message.ID, 10, 64)
-	err = db.AddEmbed(messageID, game, channelID)
+	err = db.AddTicker(messageID, game, channelID)
 	if err != nil {
 		RespondPrivate(s, i, fmt.Sprintf(
 			"Created ticker but can't save for updating: %v\n" +

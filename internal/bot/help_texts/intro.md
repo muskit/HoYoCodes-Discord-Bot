@@ -3,13 +3,12 @@
 **Welcome to HoyoCodes!**
 
 This bot will notify you of new goods code releases for *HoYoverse* games in two different formats:
-- Auto-updating status **embeds** that list all codes reported to be active and usable
+- Auto-updating **tickers** that list all codes reported to be active and usable
 - Channel **subscriptions** that notify when new codes are added and/or removed 
-  - **NOTE: you can only subscribe for now; notifications don't work just yet!**
 
 Run `/active_codes` to get the current active codes shown to you privately. You can also DM this bot to set up your own personalized notifications!
 
-**Admins**: use `/check_subscription` to check your work as you're setting up subscriptions, as well as `/check_embeds` (**NOT YET IMPLEMENTED**) while setting up embeds. 
+**Admins**: use `/check_subscription` to check your work as you're setting up subscriptions, as well as `/check_tickers` (**NOT YET IMPLEMENTED**) while setting up tickers. 
 
 Check out the other `/help` pages to explore other aspects of the bot.
 

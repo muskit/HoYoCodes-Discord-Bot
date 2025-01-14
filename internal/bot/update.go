@@ -118,7 +118,7 @@ func updateCodesDB() map[string]*CodeChanges {
 }
 
 func updateTickersRoutine(s *discordgo.Session, game string) {
-	tickers, err := db.GetEmbeds(game)
+	tickers, err := db.GetTickers(game)
 	if err != nil {
 		log.Fatalf("Error getting tickers: %v", err)
 	}

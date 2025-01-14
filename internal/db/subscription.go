@@ -197,35 +197,3 @@ func GetSubscriptionGames(channelID uint64) ([]string, error) {
 
 	return results, nil
 }
-
-func AddEmbed(messageID uint64, game string, channelID uint64) error {
-	_, err := DBCfg.Exec("INSERT INTO Embeds SET message_id = ?, game = ?, channel_id = ?", messageID, game, channelID)
-	return err
-}
-
-func RemoveTicker(messageID uint64) error {
-	_, err := DBCfg.Exec("DELETE FROM Embeds WHERE message_id = ?", messageID)
-	return err
-}
-
-// elem[0] = channel ID
-// elem[1] = message ID
-func GetEmbeds(game string) ( [][]string, error ) {
-	ret := [][]string{}
-	sels, err := DBCfg.Query("SELECT channel_id, message_id FROM Embeds WHERE game = ?", game)
-	if err != nil {
-		return ret, err
-	}
-
-	for sels.Next() {
-		channelID := ""
-		messageID := ""
-		sels.Scan(&channelID, &messageID)
-		ret = append(ret, []string{channelID, messageID})
-	}
-	if err = sels.Err(); err != nil {
-		return ret, err
-	}
-
-	return ret, nil
-}
