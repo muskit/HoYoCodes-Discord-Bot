@@ -127,6 +127,16 @@ func updateTickers(session *discordgo.Session) {
 	}
 }
 
+func ShouldNotify(sub db.Subscription, chg CodeChanges) bool {
+	if (!sub.AnnounceAdds && !sub.AnnounceRems) ||
+		(len(chg.Added) == 0 && len(chg.Removed) == 0) {
+		return false
+	}
+
+	return (sub.AnnounceAdds && len(chg.Added) > 0) ||
+		(sub.AnnounceRems && len(chg.Removed) > 0)
+}
+
 func notifySubscribers(session *discordgo.Session, changes map[string]*CodeChanges, dryrun bool) {
 	if len(changes) == 0 {
 		slog.Info("No changes to notify subscribers of")
@@ -147,9 +157,7 @@ func notifySubscribers(session *discordgo.Session, changes map[string]*CodeChang
 		}
 
 		for _, sub := range subscriptions {
-			if !sub.AnnounceAdds && !sub.AnnounceRems ||
-				(sub.AnnounceAdds && len(chg.Added) <= 0) ||
-				(sub.AnnounceRems && len(chg.Removed) <= 0) {
+			if !ShouldNotify(sub, *chg) {
 				continue
 			}
 
@@ -179,7 +187,7 @@ func notifySubscribers(session *discordgo.Session, changes map[string]*CodeChang
 			}
 
 			if link, exists := consts.RedeemURL[game]; exists {
-				content += fmt.Sprintf("\n[Redemption page](%v)\n", link)
+				content += fmt.Sprintf("\n[Redemption page](<%v>)\n", link)
 			}
 
 			footer := fmt.Sprintf("-# [source](<%v>) updated <t:%v:R>.\n", consts.ArticleURL[game], updateTime.Unix())
