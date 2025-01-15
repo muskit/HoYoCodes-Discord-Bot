@@ -18,7 +18,7 @@ var embedSpacer discordgo.MessageEmbedField = discordgo.MessageEmbedField{
 	Name: "\u200B",
 }
 
-func tickerContent(game string, willRefresh bool) string {
+func tickerText(game string, willRefresh bool) string {
 	ret := (
 		"## " + game + "\n")
 		// "**Active Codes**\n")
@@ -58,8 +58,6 @@ func tickerContent(game string, willRefresh bool) string {
 	if willRefresh {
 		refreshTime := time.Now().Add(consts.UpdateInterval)
 		footer += fmt.Sprintf("-# Refreshing in <t:%v:R>.\n", refreshTime.Unix())
-	} else {
-		footer += "-# This ticker will not auto-refresh.\n"
 	}
 
 	ret += "\n" + footer
@@ -86,7 +84,7 @@ func appendCodeFields(fields []*discordgo.MessageEmbedField, codes [][]string, g
 }
 
 
-func createEmbeds(game string, willRefresh bool) []*discordgo.MessageEmbed {
+func tickerEmbeds(game string, willRefresh bool) []*discordgo.MessageEmbed {
 	fields := []*discordgo.MessageEmbedField{ }
 
 	unrecentCodes := db.GetCodes(game, db.UnrecentCodes, false)
@@ -131,11 +129,10 @@ func createEmbeds(game string, willRefresh bool) []*discordgo.MessageEmbed {
 	}
 	footer := fmt.Sprintf("-# Checked <t:%v:R>; source updated <t:%v:R>.", checkTime.Unix(), updateTime.Unix())
 	if willRefresh {
-		refreshTime := checkTime.Add(2*time.Hour) // TODO: set update interval in config
+		refreshTime := checkTime.Add(consts.UpdateInterval)
 		footer += fmt.Sprintf("\n-# Refreshing in <t:%v:R>.", refreshTime.Unix())
-	} else {
-		footer += "\n-# This ticker will not auto-refresh."
 	}
+
 	fields = append(fields,
 		&discordgo.MessageEmbedField{
 			Value: footer,
@@ -170,7 +167,7 @@ func UpdateEmbedTickersGame(s *discordgo.Session, game string) {
 		log.Fatalf("Error getting embeds to update: %v", err)
 	}
 
-	embeds := createEmbeds(game, true)	
+	embeds := tickerEmbeds(game, true)	
 
 	for _, msg := range tickers {
 		channelID, messageID := msg[0], msg[1]
@@ -202,9 +199,8 @@ func UpdateTextTickersGame(s *discordgo.Session, game string) {
 	}
 
 	slog.Debug("", "game", game)
-	content := tickerContent(game, true)
+	content := tickerText(game, true)
 	slog.Debug("", "len(content)", len(content))
-	// slog.Debug(fmt.Sprintf("Content is as follows:\n%v", content))
 
 	for _, emb := range tickers {
 		channelID, messageID := emb[0], emb[1]

@@ -28,7 +28,7 @@ func HandleCreateTicker(s *discordgo.Session, i *discordgo.InteractionCreate, op
 	channelID := GetChannelID(i, opts)
 	game := opts["game"].StringValue()
 
-	content := tickerContent(game, true)
+	content := tickerText(game, true)
 	message, err := s.ChannelMessageSend(strconv.FormatUint(channelID, 10), content)
 	if err != nil {
 		RespondPrivate(s, i, fmt.Sprintf("Error creating ticker: %v", err))
@@ -93,11 +93,11 @@ func HandleDeleteTicker(s *discordgo.Session, i *discordgo.InteractionCreate, op
 
 func HandleActiveCodes(s *discordgo.Session, i *discordgo.InteractionCreate, opts CmdOptMap) {
 	game := opts["game"].StringValue()
-	content := tickerContent(game, false)
+	embeds := tickerEmbeds(game, false)
 	resp := discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content: content,
+			Embeds: embeds,
 			Flags: discordgo.MessageFlagsEphemeral,
 		},
 	}
