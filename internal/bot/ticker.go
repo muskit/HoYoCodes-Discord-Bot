@@ -24,20 +24,20 @@ func tickerText(game string, willRefresh bool) string {
 		// "**Active Codes**\n")
 
 	// non-recent codes
-	codes := db.GetCodes(game, db.UnrecentCodes, false)
+	codes := db.GetCodes(game, db.Unrecent, false)
 	if len(codes) > 0 {
 		ret += util.CodeListing(codes) + "\n"
 	}	
 
 	// recent codes
-	codes = db.GetCodes(game, db.RecentCodes, false)
+	codes = db.GetCodes(game, db.Recent, false)
 	if len(codes) > 0 {
 		ret += "\n**Recently Added**\n"
 		ret += util.CodeListing(codes) + "\n"
 	}	
 
 	// livestream codes
-	codes = db.GetCodes(game, db.AllCodes, true)
+	codes = db.GetCodes(game, db.All, true)
 	if len(codes) > 0 {
 		ret += "\n**Livestream (use ASAP; may expire sooner!)**\n"
 		ret += util.CodeListing(codes) + "\n"
@@ -85,38 +85,39 @@ func appendCodeFields(fields []*discordgo.MessageEmbedField, codes [][]string, g
 
 
 func tickerEmbeds(game string, willRefresh bool) []*discordgo.MessageEmbed {
-	fields := []*discordgo.MessageEmbedField{ }
+	fieldLists := [][]*discordgo.MessageEmbedField{}
 
-	unrecentCodes := db.GetCodes(game, db.UnrecentCodes, false)
-	recentCodes := db.GetCodes(game, db.RecentCodes, false)
-	livestreamCodes := db.GetCodes(game, db.AllCodes, true)
+	unrecentCodes := db.GetCodes(game, db.Unrecent, false)
+	recentCodes := db.GetCodes(game, db.Recent, false)
+	livestreamCodes := db.GetCodes(game, db.All, true)
 
 	if len(unrecentCodes) > 0 {
-		fields = appendCodeFields(fields, unrecentCodes, game)
+		fields := appendCodeFields([]*discordgo.MessageEmbedField{}, unrecentCodes, game)
+		fieldLists = append(fieldLists, util.DownstackIntoSlices(fields, 25)...)
 	}
 	if len(recentCodes) > 0 {
-		fields = append(fields,
-			&embedSpacer,
-			&discordgo.MessageEmbedField{
+		fields := []*discordgo.MessageEmbedField{
+			{
 				Name: "--- Recently Added ---",
 			},
-		)
+		}
 		fields = appendCodeFields(fields, recentCodes, game)
+		fieldLists = append(fieldLists, util.DownstackIntoSlices(fields, 25)...)
 	}
 	if len(livestreamCodes) > 0 {
-		fields = append(fields,
-			&embedSpacer,
-			&discordgo.MessageEmbedField{
-				Name: "--- Livestream Codes ---",
+		fields := []*discordgo.MessageEmbedField{
+			{
+				Name: "--- Livestream Codes (use ASAP; may expire soon!) ---",
 			},
-		)
+		}
 		fields = appendCodeFields(fields, livestreamCodes, game)
+		fieldLists = append(fieldLists, util.DownstackIntoSlices(fields, 25)...)
 	}
 
 	redeem, exists := consts.RedeemURL[game]
+	footerFields := []*discordgo.MessageEmbedField{}
 	if exists {
-		fields = append(fields,
-			// &fieldSpacer,
+		footerFields = append(footerFields,
 			&discordgo.MessageEmbedField{
 				Value: fmt.Sprintf("**[Redemption page](%v)**", redeem),
 			},
@@ -127,21 +128,20 @@ func tickerEmbeds(game string, willRefresh bool) []*discordgo.MessageEmbed {
 	if err != nil {
 		log.Fatalf("Error getting update time for %v: %v", game, err)
 	}
-	footer := fmt.Sprintf("-# Checked <t:%v:R>; source updated <t:%v:R>.", checkTime.Unix(), updateTime.Unix())
+	timeField := fmt.Sprintf("-# Checked <t:%v:R>; source updated <t:%v:R>.", checkTime.Unix(), updateTime.Unix())
 	if willRefresh {
 		refreshTime := checkTime.Add(consts.UpdateInterval)
-		footer += fmt.Sprintf("\n-# Refreshing in <t:%v:R>.", refreshTime.Unix())
+		timeField += fmt.Sprintf("\n-# Refreshing in <t:%v:R>.", refreshTime.Unix())
 	}
 
-	fields = append(fields,
+	footerFields = append(footerFields,
 		&discordgo.MessageEmbedField{
-			Value: footer,
+			Value: timeField,
 		},
 	)
 
-	// assemble embeds
-	embeds := []*discordgo.MessageEmbed{}
-	fieldLists := util.DownstackIntoSlices(fields, 25)
+	// assemble downstacked
+	downstacked := []*discordgo.MessageEmbed{}
 	for i, curFields := range fieldLists {
 		curEmbed := discordgo.MessageEmbed{ Color: color[game], }
 		if i == 0 {
@@ -155,10 +155,11 @@ func tickerEmbeds(game string, willRefresh bool) []*discordgo.MessageEmbed {
 			}
 		}
 		curEmbed.Fields = curFields
-		embeds = append(embeds, &curEmbed)
+		downstacked = append(downstacked, &curEmbed)
 	}
 
-	return embeds
+	footerEmbed := discordgo.MessageEmbed{Color: color[game], Fields: footerFields}
+	return append(downstacked, &footerEmbed)
 }
 
 func UpdateEmbedTickersGame(s *discordgo.Session, game string) {

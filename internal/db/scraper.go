@@ -6,13 +6,17 @@ import (
 	"log"
 	"log/slog"
 	"time"
+
+	"github.com/muskit/hoyocodes-discord-bot/pkg/consts"
 )
 
 // get code recency options
 type CodeRecencyOption uint8
-const AllCodes CodeRecencyOption = 0
-const RecentCodes CodeRecencyOption = 1
-const UnrecentCodes CodeRecencyOption = 2
+const All CodeRecencyOption = 0
+const Recent CodeRecencyOption = 1
+const Unrecent CodeRecencyOption = 2
+const RecentSinceLatest CodeRecencyOption = 3
+const UnrecentSinceLatest CodeRecencyOption = 4
 
 func AddCode(code string, game string, description string, livestream bool, foundTime time.Time) error {
 	_, err := DBScraper.Exec("INSERT INTO Codes SET code = ?, game = ?, description = ?, is_livestream = ?, added = ?", code, game, description, livestream, foundTime)
@@ -46,25 +50,31 @@ func GetCodes(game string, recency CodeRecencyOption, livestream bool) [][]strin
 	codes := [][]string{}
 
 	switch recency {
-	case AllCodes:
+	case All:
 		sels, err = DBScraper.Query("SELECT code, description FROM Codes WHERE game = ? AND is_livestream = ? ORDER BY added ASC", game, livestream)
-	case RecentCodes:
+	case RecentSinceLatest:
 		// get most recent code's added datetime
 		recentTime, rerr := GetMostRecentCodeTime(game)
 		if rerr != nil {
 			log.Fatalf("Error getting most recent code time for %v: %v", game, rerr)
 		}
 		// get codes added within 24 hours before the most recent
-		oldestTime := recentTime.Add(-24 * time.Hour)
+		oldestTime := recentTime.Add(-consts.RecentSinceLatestThreshold)
 		sels, err = DBScraper.Query("SELECT code, description FROM Codes WHERE game = ? AND is_livestream = ? AND added >= ? ORDER BY added ASC", game, livestream, oldestTime)
-	case UnrecentCodes:
+	case UnrecentSinceLatest:
 		// get most recent code's added datetime
 		recentTime, rerr := GetMostRecentCodeTime(game)
 		if rerr != nil {
 			log.Fatalf("Error getting most recent code time for %v: %v", game, err)
 		}
 		// select codes added older than 24 hours before the most recent
-		oldestTime := recentTime.Add(-24 * time.Hour)
+		oldestTime := recentTime.Add(-consts.RecentSinceLatestThreshold)
+		sels, err = DBScraper.Query("SELECT code, description FROM Codes WHERE game = ? AND is_livestream = ? AND added < ? ORDER BY added ASC", game, livestream, oldestTime)
+	case Recent:
+		oldestTime := time.Now().Add(-consts.RecentThreshold)
+		sels, err = DBScraper.Query("SELECT code, description FROM Codes WHERE game = ? AND is_livestream = ? AND added >= ? ORDER BY added ASC", game, livestream, oldestTime)
+	case Unrecent:
+		oldestTime := time.Now().Add(-consts.RecentThreshold)
 		sels, err = DBScraper.Query("SELECT code, description FROM Codes WHERE game = ? AND is_livestream = ? AND added < ? ORDER BY added ASC", game, livestream, oldestTime)
 	}
 	

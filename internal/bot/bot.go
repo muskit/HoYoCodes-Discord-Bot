@@ -384,6 +384,7 @@ func RunBot() {
 	// EVENT HANDLERS //
 	// Bot Interaction
 	session.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		slog.Debug(fmt.Sprintf("Received interaction of type %v", i.Type))
 		// only commands
 		if i.Type != discordgo.InteractionApplicationCommand {
 			return

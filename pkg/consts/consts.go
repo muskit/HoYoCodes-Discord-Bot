@@ -22,4 +22,6 @@ var ArticleURL map[string]string = map[string]string{
 	"Zenless Zone Zero": "https://www.pockettactics.com/zenless-zone-zero/codes",
 }
 
-var UpdateInterval = 2 * time.Hour
+const UpdateInterval = 2 * time.Hour
+const RecentSinceLatestThreshold = 36 * time.Hour
+const RecentThreshold = 7*24*time.Hour
