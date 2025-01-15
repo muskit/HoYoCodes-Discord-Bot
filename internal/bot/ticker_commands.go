@@ -92,7 +92,6 @@ func HandleDeleteTicker(s *discordgo.Session, i *discordgo.InteractionCreate, op
 }
 
 func HandleGetTickers(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	// TODO implement
 	tickers, err := db.GetGuildTickers(i.GuildID)
 	if err != nil {
 		log.Fatalf("Error getting tickers from guild %v: %v", i.GuildID, err)
