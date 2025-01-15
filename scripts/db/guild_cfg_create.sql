@@ -24,7 +24,8 @@ CREATE TABLE `SubscriptionPingRoles` (
 CREATE TABLE `Tickers` (
   `message_id` BIGINT UNSIGNED PRIMARY KEY,
   `game` ENUM ('Honkai Impact 3rd', 'Genshin Impact', 'Honkai Star Rail', 'Zenless Zone Zero'),
-  `channel_id` BIGINT UNSIGNED
+  `channel_id` BIGINT UNSIGNED,
+  `guild_id` BIGINT UNSIGNED
 );
 
 CREATE INDEX `subscription_guild_index` ON `Subscriptions` (`guild_id`);

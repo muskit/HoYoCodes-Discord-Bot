@@ -6,7 +6,6 @@ toolchain go1.23.4
 
 require (
 	github.com/bwmarrin/discordgo v0.28.2-0.20241208071600-33ffff21d31a
-	github.com/cdfmlr/ellipsis v0.0.1
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/gocolly/colly v1.2.0
 	github.com/hashicorp/go-set/v3 v3.0.0

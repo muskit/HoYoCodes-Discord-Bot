@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"log/slog"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -189,7 +188,7 @@ func notifySubscribers(session *discordgo.Session, changes map[string]*CodeChang
 			slog.Debug(fmt.Sprintf("for %v:\n%s", sub.ChannelID, content))
 			if dryrun { continue }
 
-			if _, err := session.ChannelMessageSend(strconv.FormatUint(sub.ChannelID, 10), content); err != nil {
+			if _, err := session.ChannelMessageSend(sub.ChannelID, content); err != nil {
 				log.Fatalf("Error sending subscription notification to %v: %v", sub.ChannelID, err)
 			}
 		}

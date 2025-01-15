@@ -9,7 +9,7 @@ import (
 
 func getSubsPrint(sub *db.Subscription) string {
 	const TEMPLATE string = (
-		"# <#%v>\n"+
+		"__**<#%v>**__\n"+
 		"**Active:** %v\n"+
 		"**Announce additions:** %v\n"+
 		"**Announce removals:** %v\n"+
@@ -38,7 +38,7 @@ func getSubsPrint(sub *db.Subscription) string {
 	for _, r := range roles {
 		roleList += fmt.Sprintf("- <@&%v>\n", r)
 	}
-	roleList = strings.Trim(roleList, " \n")
+	roleList = strings.TrimLeft(roleList, " \t\n")
 
-	return fmt.Sprintf(TEMPLATE, sub.ChannelID, sub.Active, sub.AnnounceAdds, sub.AnnounceRems, gameList, roleList)
+	return strings.Trim(fmt.Sprintf(TEMPLATE, sub.ChannelID, sub.Active, sub.AnnounceAdds, sub.AnnounceRems, gameList, roleList), " \t\n")
 }

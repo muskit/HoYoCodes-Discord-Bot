@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
-	"strconv"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
@@ -186,11 +185,11 @@ var (
 		},
 		{
 			Name: "check_subscription",
-			Description: "Show subscription configuration for a channel.",
+			Description: "Show subscription configuration for the current channel.",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Name: "all_channels",
-					Description: "Show config for all channels in this server. Default: false",
+					Description: "Show subscriptions for all channels in this server. Default: false",
 					Type: discordgo.ApplicationCommandOptionBoolean,
 					Required: false,
 				},
@@ -226,15 +225,7 @@ var (
 		},
 		{
 			Name: "check_tickers",
-			Description: "Show all ticker present in a channel.",
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Name: "all_channels",
-					Description: "Get all ticker present in the server. Default: false",
-					Type: discordgo.ApplicationCommandOptionBoolean,
-					Required: false,
-				},
-			},
+			Description: "Show all tickers present in the server.",
 		},
 		/// MISC ///
 		{
@@ -269,14 +260,6 @@ func interactionAuthor(i *discordgo.Interaction) *discordgo.User {
 		return i.Member.User
 	}
 	return i.User
-}
-
-func GetChannelID(i *discordgo.InteractionCreate, opts CmdOptMap) uint64 {
-	id, _ := strconv.ParseUint(i.ChannelID, 10, 64)
-	if val, exists := opts["channel"]; exists {
-		id, _ = strconv.ParseUint(val.ChannelValue(nil).ID, 10, 64)
-	}
-	return id
 }
 
 func Respond(s *discordgo.Session, i *discordgo.InteractionCreate, str string) {
@@ -371,7 +354,7 @@ func RunBot() {
 		case "filter_games":
 			HandleFilterGames(s, i, opts)
 		case "check_subscription":
-			HandleShowSubscription(s, i, opts)
+			HandleCheckSubscription(s, i, opts)
 		case "add_ping_role":
 			HandleAddPingRole(s, i, opts)
 		case "remove_ping_role":
@@ -382,6 +365,8 @@ func RunBot() {
 			HandleDeleteTicker(s, i, opts)
 		case "active_codes":
 			HandleActiveCodes(s, i, opts)
+		case "check_tickers":
+			HandleGetTickers(s, i)
 		default:
 			slog.Warn(fmt.Sprintf("Tried to run an unimplemented command %s!!", data.Name))
 			if len(opts) > 0 {

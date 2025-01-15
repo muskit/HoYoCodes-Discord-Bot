@@ -5,29 +5,34 @@ import (
 )
 
 type Subscription struct {
-	ChannelID uint64
+	ChannelID string
 	Active bool
 	AnnounceAdds bool
 	AnnounceRems bool
 }
 
-func CreateSubscription(channelID uint64, guildID uint64, additions bool, removals bool) error {
+func CreateSubscription(channelID string, guildID string, additions bool, removals bool) error {
 	_, err := DBCfg.Exec("INSERT INTO Subscriptions SET channel_id = ?, guild_id = ?, announce_additions = ?, announce_removals = ?", channelID, guildID, additions, removals)
 	return err
 }
 
-func UpdateSubscription(channelID uint64, additions bool, removals bool) error {
+func UpdateSubscription(channelID string, additions bool, removals bool) error {
 	_, err := DBCfg.Exec("UPDATE Subscriptions SET announce_additions = ?, announce_removals = ?, active = true WHERE channel_id = ?", additions, removals, channelID)
 	return err
 }
 
-func DeactivateSubscription(channelID uint64) error {
+func DeactivateSubscription(channelID string) error {
 	// _, err := DBCfg.Exec("DELETE FROM Subscriptions WHERE channel_id = ?", channelID)
 	_, err := DBCfg.Exec("UPDATE Subscriptions SET active = false WHERE channel_id = ?", channelID)
 	return err
 }
 
-func GetSubscription(channelID uint64) (*Subscription, error) {
+func DeleteSubscription(channelID string) error {
+	_, err := DBCfg.Exec("DELETE FROM Subscriptions WHERE channel_id = ?", channelID)
+	return err
+}
+
+func GetSubscription(channelID string) (*Subscription, error) {
 	var announceAdds bool
 	var announceRems bool
 	var active bool
@@ -44,7 +49,7 @@ func GetSubscription(channelID uint64) (*Subscription, error) {
 	}, nil
 }
 
-func GetSubscriptionsFromGuild(guildID uint64) ([]Subscription, error) {
+func GetGuildSubscriptions(guildID string) ([]Subscription, error) {
 	result := []Subscription{}
 
 	sels, err := DBCfg.Query("SELECT channel_id, active, announce_additions, announce_removals FROM Subscriptions WHERE guild_id = ?", guildID)
@@ -52,7 +57,7 @@ func GetSubscriptionsFromGuild(guildID uint64) ([]Subscription, error) {
 		return result, err
 	}
 
-	var channel_id uint64
+	var channel_id string
 	var active bool
 	var announceAdds bool
 	var announceRems bool
@@ -87,7 +92,7 @@ func GetGameSubscriptions(game string) ([]Subscription, error) {
 	}
 
 	for sels.Next() {
-		var channel_id uint64
+		var channel_id string
 		var active bool
 		var announceAdds bool
 		var announceRems bool
@@ -115,7 +120,7 @@ func GetGameSubscriptions(game string) ([]Subscription, error) {
 	}
 
 	for sels.Next() {
-		var channel_id uint64
+		var channel_id string
 		var active bool
 		var announceAdds bool
 		var announceRems bool
@@ -135,24 +140,24 @@ func GetGameSubscriptions(game string) ([]Subscription, error) {
 	return result, nil
 }
 
-func AddPingRole(channelID uint64, pingRole uint64) error {
+func AddPingRole(channelID string, pingRole string) error {
 	_, err := DBCfg.Exec("INSERT INTO SubscriptionPingRoles SET channel_id = ?, role_id = ?", channelID, pingRole)
 	return err
 }
 
-func RemovePingRole(channelID uint64, pingRole uint64) error {
+func RemovePingRole(channelID string, pingRole string) error {
 	_, err := DBCfg.Exec("DELETE FROM SubscriptionPingRoles WHERE channel_id = ? AND role_id = ?", channelID, pingRole)
 	return err
 }
 
-func GetPingRoles(channelID uint64) ([]uint64, error) {
+func GetPingRoles(channelID string) ([]string, error) {
 	rows, err := DBCfg.Query("SELECT role_id FROM SubscriptionPingRoles WHERE channel_id = ?", channelID)
 	if err != nil {
 		return nil, err
 	}
 
-	results := []uint64{}
-	var val uint64
+	results := []string{}
+	var val string
 	for rows.Next() {
 		rows.Scan(&val)
 		results = append(results, val)
@@ -164,7 +169,7 @@ func GetPingRoles(channelID uint64) ([]uint64, error) {
 	return results, nil
 }
 
-func SetGameFilters(channelID uint64, games *set.Set[string]) error {
+func SetGameFilters(channelID string, games *set.Set[string]) error {
 	if _, err := DBCfg.Exec("DELETE FROM SubscriptionGames WHERE channel_id = ?", channelID); err != nil {
 		return err
 	}
@@ -178,7 +183,7 @@ func SetGameFilters(channelID uint64, games *set.Set[string]) error {
 	return nil
 }
 
-func GetSubscriptionGames(channelID uint64) ([]string, error) {
+func GetSubscriptionGames(channelID string) ([]string, error) {
 	rows, err := DBCfg.Query("SELECT game FROM SubscriptionGames WHERE channel_id = ?", channelID)
 	if err != nil {
 		return nil, err

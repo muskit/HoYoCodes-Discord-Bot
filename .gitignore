@@ -26,6 +26,7 @@ go.work.sum
 
 # ephemeral "run" directory
 /.run/
+/run/
 
 # built binary
 /app

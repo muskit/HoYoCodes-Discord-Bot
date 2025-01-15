@@ -25,3 +25,6 @@ var ArticleURL map[string]string = map[string]string{
 const UpdateInterval = 2 * time.Hour
 const RecentSinceLatestThreshold = 36 * time.Hour
 const RecentThreshold = 7*24*time.Hour
+
+// guild_id, channel_id, message_id
+const MessageLinkTemplate = "https://discord.com/channels/%v/%v/%v"

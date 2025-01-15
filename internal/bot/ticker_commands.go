@@ -2,12 +2,13 @@ package bot
 
 import (
 	"fmt"
+	"log"
 	"net/url"
-	"strconv"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/muskit/hoyocodes-discord-bot/internal/db"
+	"github.com/muskit/hoyocodes-discord-bot/pkg/consts"
 )
 
 var color map[string]int = map[string]int{
@@ -25,25 +26,25 @@ var image map[string]string = map[string]string{
 }
 
 func HandleCreateTicker(s *discordgo.Session, i *discordgo.InteractionCreate, opts CmdOptMap) {
-	channelID := GetChannelID(i, opts)
+	guildID := i.GuildID
 	game := opts["game"].StringValue()
 	embeds := tickerEmbeds(game, true)
 
-	message, err := s.ChannelMessageSendEmbeds(strconv.FormatUint(channelID, 10), embeds)
+	message, err := s.ChannelMessageSendEmbeds(i.ChannelID, embeds)
 	if err != nil {
 		RespondPrivate(s, i, fmt.Sprintf("Error creating ticker: %v", err))
 		return
 	}
 
-	messageID, _ := strconv.ParseUint(message.ID, 10, 64)
-	err = db.AddTicker(messageID, game, channelID)
+	messageID := message.ID
+	err = db.AddTicker(messageID, game, i.ChannelID, guildID)
 	if err != nil {
 		RespondPrivate(s, i, fmt.Sprintf(
 			"Created ticker but can't save for updating: %v\n" +
 			"This ticker will not update; please delete it and try again.", err))
 		return
 	}
-	RespondPrivate(s, i, fmt.Sprintf("Successfully created ticker in <#%v> for %v!", channelID, game))
+	RespondPrivate(s, i, fmt.Sprintf("Successfully created ticker in <#%v> for %v!", i.ChannelID, game))
 }
 
 func HandleDeleteTicker(s *discordgo.Session, i *discordgo.InteractionCreate, opts CmdOptMap) {
@@ -82,13 +83,27 @@ func HandleDeleteTicker(s *discordgo.Session, i *discordgo.InteractionCreate, op
 	}
 
 	// remove message from DB
-	id, _ := strconv.ParseUint(messageID, 10, 64)
-	err = db.RemoveTicker(id)
+	err = db.RemoveTicker(messageID)
 	if err != nil {
 		RespondPrivate(s, i, fmt.Sprintf("Error removing ticker from tracking: %v", err))
 		return
 	}
 	RespondPrivate(s, i, "Ticker successfully removed!")
+}
+
+func HandleGetTickers(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	// TODO implement
+	tickers, err := db.GetGuildTickers(i.GuildID)
+	if err != nil {
+		log.Fatalf("Error getting tickers from guild %v: %v", i.GuildID, err)
+	}
+
+	out := fmt.Sprintf("**Tickers in server ID %v**\n", i.GuildID)
+	for _, t := range tickers {
+		url := fmt.Sprintf(consts.MessageLinkTemplate, i.GuildID, t.ChannelID, t.MessageID)
+		out += fmt.Sprintf("- %v (%v)\n", url, t.Game)
+	}
+	RespondPrivate(s, i, strings.Trim(out, " \t\n"))
 }
 
 func HandleActiveCodes(s *discordgo.Session, i *discordgo.InteractionCreate, opts CmdOptMap) {
