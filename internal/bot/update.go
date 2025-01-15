@@ -25,7 +25,7 @@ type CodeChanges struct {
 
 func UpdateRoutine(session *discordgo.Session) {
 	for {
-		slog.Info("Beginning update loop...")
+		slog.Info("---------- Start update loop ----------")
 		UpdatingMutex.Lock()
 		changes := updateCodesDB()
 		updateTickers(session)
@@ -123,7 +123,8 @@ func updateTickers(session *discordgo.Session) {
 	
 	for _, g := range consts.Games {
 		game := g
-		UpdateTickersGame(session, game)
+		UpdateEmbedTickersGame(session, game)
+		// UpdateTextTickersGame(session, game)
 	}
 }
 

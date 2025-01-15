@@ -14,10 +14,14 @@ import (
 	"github.com/muskit/hoyocodes-discord-bot/pkg/util"
 )
 
+var embedSpacer discordgo.MessageEmbedField = discordgo.MessageEmbedField{
+	Name: "\u200B",
+}
+
 func tickerContent(game string, willRefresh bool) string {
 	ret := (
-		"## " + game + "\n"+
-		"**Active Codes**\n")
+		"## " + game + "\n")
+		// "**Active Codes**\n")
 
 	// non-recent codes
 	codes := db.GetCodes(game, db.UnrecentCodes, false)
@@ -28,7 +32,7 @@ func tickerContent(game string, willRefresh bool) string {
 	// recent codes
 	codes = db.GetCodes(game, db.RecentCodes, false)
 	if len(codes) > 0 {
-		ret += "\n**Added Last Update**\n"
+		ret += "\n**Recently Added**\n"
 		ret += util.CodeListing(codes) + "\n"
 	}	
 
@@ -63,7 +67,135 @@ func tickerContent(game string, willRefresh bool) string {
 	return ret
 }
 
-func UpdateTickersGame(s *discordgo.Session, game string) {
+func appendCodeFields(fields []*discordgo.MessageEmbedField, codes [][]string, game string) []*discordgo.MessageEmbedField {
+	for _, code := range codes {
+		var val string
+		if codeURL := util.CodeRedeemURL(game, code[0]); codeURL != nil {
+			val = fmt.Sprintf("[%v](%v)", code[1], *codeURL)
+		} else {
+			val = code [1]
+		}
+
+		fields = append(fields, &discordgo.MessageEmbedField{
+			Name: "`" + code[0] + "`",
+			Value: val,
+			Inline: true,
+		})
+	}
+	return fields
+}
+
+
+func createEmbeds(game string, willRefresh bool) []*discordgo.MessageEmbed {
+	fields := []*discordgo.MessageEmbedField{ }
+
+	unrecentCodes := db.GetCodes(game, db.UnrecentCodes, false)
+	recentCodes := db.GetCodes(game, db.RecentCodes, false)
+	livestreamCodes := db.GetCodes(game, db.AllCodes, true)
+
+	if len(unrecentCodes) > 0 {
+		fields = appendCodeFields(fields, unrecentCodes, game)
+	}
+	if len(recentCodes) > 0 {
+		fields = append(fields,
+			&embedSpacer,
+			&discordgo.MessageEmbedField{
+				Name: "--- Recently Added ---",
+			},
+		)
+		fields = appendCodeFields(fields, recentCodes, game)
+	}
+	if len(livestreamCodes) > 0 {
+		fields = append(fields,
+			&embedSpacer,
+			&discordgo.MessageEmbedField{
+				Name: "--- Livestream Codes ---",
+			},
+		)
+		fields = appendCodeFields(fields, livestreamCodes, game)
+	}
+
+	redeem, exists := consts.RedeemURL[game]
+	if exists {
+		fields = append(fields,
+			// &fieldSpacer,
+			&discordgo.MessageEmbedField{
+				Value: fmt.Sprintf("**[Redemption page](%v)**", redeem),
+			},
+		)
+	}
+
+	checkTime, updateTime, err := db.GetScrapeTimes(game)
+	if err != nil {
+		log.Fatalf("Error getting update time for %v: %v", game, err)
+	}
+	footer := fmt.Sprintf("-# Checked <t:%v:R>; source updated <t:%v:R>.", checkTime.Unix(), updateTime.Unix())
+	if willRefresh {
+		refreshTime := checkTime.Add(2*time.Hour) // TODO: set update interval in config
+		footer += fmt.Sprintf("\n-# Refreshing in <t:%v:R>.", refreshTime.Unix())
+	} else {
+		footer += "\n-# This ticker will not auto-refresh."
+	}
+	fields = append(fields,
+		&discordgo.MessageEmbedField{
+			Value: footer,
+		},
+	)
+
+	// assemble embeds
+	embeds := []*discordgo.MessageEmbed{}
+	fieldLists := util.DownstackIntoSlices(fields, 25)
+	for i, curFields := range fieldLists {
+		curEmbed := discordgo.MessageEmbed{ Color: color[game], }
+		if i == 0 {
+			curEmbed = discordgo.MessageEmbed{
+				Color: color[game],
+				Title: game,
+				URL: consts.ArticleURL[game],
+				Thumbnail: &discordgo.MessageEmbedThumbnail{
+					URL: image[game],
+				},
+			}
+		}
+		curEmbed.Fields = curFields
+		embeds = append(embeds, &curEmbed)
+	}
+
+	return embeds
+}
+
+func UpdateEmbedTickersGame(s *discordgo.Session, game string) {
+	tickers, err := db.GetTickers(game)
+	if err != nil {
+		log.Fatalf("Error getting embeds to update: %v", err)
+	}
+
+	embeds := createEmbeds(game, true)	
+
+	for _, msg := range tickers {
+		channelID, messageID := msg[0], msg[1]
+		edit := discordgo.MessageEdit{
+			Channel: channelID,
+			ID: messageID,
+			Content: new(string),
+			Embeds: &embeds,
+		}
+		if _, err = s.ChannelMessageEditComplex(&edit); err != nil {
+			if strings.Contains(err.Error(), "HTTP 404 Not Found") {
+				// message no longer exists -- delete from db
+				msgNum, _ := strconv.ParseUint(messageID, 10, 64)
+				err := db.RemoveTicker(msgNum)
+				if err != nil {
+					slog.Error(fmt.Sprintf("404'd removing ticker from db during update: %s", err))
+				}
+			} else {
+				log.Fatalf("Error updating ticker: %v", err)
+			}
+		}
+	}
+}
+
+func UpdateTextTickersGame(s *discordgo.Session, game string) {
 	tickers, err := db.GetTickers(game)
 	if err != nil {
 		log.Fatalf("Error getting tickers: %v", err)
@@ -84,7 +216,6 @@ func UpdateTickersGame(s *discordgo.Session, game string) {
 			Content: &content,
 			Embeds: &[]*discordgo.MessageEmbed{}, // delete old embed if still there
 		}
-		// if _, err := s.ChannelMessageEdit(channelID, messageID, content, ); err != nil {
 		if _, err := s.ChannelMessageEditComplex(&edit); err != nil {
 			if strings.Contains(err.Error(), "HTTP 404 Not Found") {
 				// message no longer exists -- delete from db
