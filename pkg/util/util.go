@@ -29,7 +29,7 @@ func CodeRedeemURL(game string, code string) *string {
 		return nil
 	}
 
-	url += "/?code=" + code
+	url += "?code=" + code
 	return &url
 }
 

@@ -19,7 +19,7 @@ func TestCodeListing(t *testing.T) {
 func TestCodeRedeemURL(t *testing.T) {
 	code := "ABC123"
 	game := "Genshin Impact"
-	expected := "https://genshin.hoyoverse.com/en/gift/?code=ABC123"
+	expected := "https://genshin.hoyoverse.com/en/gift?code=ABC123"
 	result := CodeRedeemURL(game, code)
 	if result == nil || *result != expected {
 		t.Errorf("expected %v, got %v", expected, result)
