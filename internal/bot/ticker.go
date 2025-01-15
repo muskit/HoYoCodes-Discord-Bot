@@ -26,21 +26,21 @@ func tickerText(game string, willRefresh bool) string {
 	// non-recent codes
 	codes := db.GetCodes(game, db.Unrecent, false)
 	if len(codes) > 0 {
-		ret += util.CodeListing(codes) + "\n"
+		ret += util.CodeListing(codes, &game) + "\n"
 	}	
 
 	// recent codes
 	codes = db.GetCodes(game, db.Recent, false)
 	if len(codes) > 0 {
 		ret += "\n**Recently Added**\n"
-		ret += util.CodeListing(codes) + "\n"
+		ret += util.CodeListing(codes, &game) + "\n"
 	}	
 
 	// livestream codes
 	codes = db.GetCodes(game, db.All, true)
 	if len(codes) > 0 {
 		ret += "\n**Livestream (use ASAP; may expire sooner!)**\n"
-		ret += util.CodeListing(codes) + "\n"
+		ret += util.CodeListing(codes, &game) + "\n"
 	}	
 
 	// redemption shortcut
@@ -68,7 +68,7 @@ func tickerText(game string, willRefresh bool) string {
 func appendCodeFields(fields []*discordgo.MessageEmbedField, codes [][]string, game string) []*discordgo.MessageEmbedField {
 	for _, code := range codes {
 		var val string
-		if codeURL := util.CodeRedeemURL(game, code[0]); codeURL != nil {
+		if codeURL := util.CodeRedeemURL(code[0], game); codeURL != nil {
 			val = fmt.Sprintf("[%v](%v)", code[1], *codeURL)
 		} else {
 			val = code [1]
@@ -90,7 +90,9 @@ func tickerEmbeds(game string, willRefresh bool) []*discordgo.MessageEmbed {
 	unrecentCodes := db.GetCodes(game, db.Unrecent, false)
 	recentCodes := db.GetCodes(game, db.Recent, false)
 	livestreamCodes := db.GetCodes(game, db.All, true)
+	numCodes := len(unrecentCodes)+len(recentCodes)+len(livestreamCodes)
 
+	// code embeds
 	if len(unrecentCodes) > 0 {
 		fields := appendCodeFields([]*discordgo.MessageEmbedField{}, unrecentCodes, game)
 		fieldLists = append(fieldLists, util.DownstackIntoSlices(fields, 25)...)
@@ -115,16 +117,16 @@ func tickerEmbeds(game string, willRefresh bool) []*discordgo.MessageEmbed {
 	}
 
 	// footer embed
-
 	footerFields := []*discordgo.MessageEmbedField{}
+
 	redeem, exists := consts.RedeemURL[game]
-	if exists {
-		footerFields = append(footerFields,
-			&discordgo.MessageEmbedField{
-				Value: fmt.Sprintf("**[Redemption page](%v)**", redeem),
-			},
-		)
+	redeemField := &discordgo.MessageEmbedField{
+		Name: fmt.Sprintf("%d codes reported active", numCodes),
 	}
+	if exists {
+		redeemField.Value = fmt.Sprintf("**[Redemption page](%v)**", redeem)
+	}
+	footerFields = append(footerFields, redeemField)
 
 	checkTime, updateTime, err := db.GetScrapeTimes(game)
 	if err != nil {

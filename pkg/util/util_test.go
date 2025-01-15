@@ -9,8 +9,20 @@ func TestCodeListing(t *testing.T) {
 		{"ABC123", "This is a test code description that is quite long"},
 		{"XYZ789", "Short desc"},
 	}
-	expected := "- `ABC123` - This is a test co...\n- `XYZ789` - Short desc"
-	result := CodeListing(codes)
+	game := "Genshin Impact"
+	expected :=
+		"- [`ABC123`](https://genshin.hoyoverse.com/en/gift?code=ABC123) - This is a test code description that is quite long\n"+
+		"- [`XYZ789`](https://genshin.hoyoverse.com/en/gift?code=XYZ789) - Short desc"
+	result := CodeListing(codes, &game)
+	if result != expected {
+		t.Errorf("expected %v, got %v", expected, result)
+	}
+
+	// Test without game
+	expected =
+		"- `ABC123` - This is a test code description that is quite long\n"+
+		"- `XYZ789` - Short desc"
+	result = CodeListing(codes, nil)
 	if result != expected {
 		t.Errorf("expected %v, got %v", expected, result)
 	}
@@ -20,13 +32,13 @@ func TestCodeRedeemURL(t *testing.T) {
 	code := "ABC123"
 	game := "Genshin Impact"
 	expected := "https://genshin.hoyoverse.com/en/gift?code=ABC123"
-	result := CodeRedeemURL(game, code)
+	result := CodeRedeemURL(code, game)
 	if result == nil || *result != expected {
 		t.Errorf("expected %v, got %v", expected, result)
 	}
 
 	game = "Unknown Game"
-	result = CodeRedeemURL(game, code)
+	result = CodeRedeemURL(code, game)
 	if result != nil {
 		t.Errorf("expected nil, got %v", *result)
 	}

@@ -172,11 +172,11 @@ func notifySubscribers(session *discordgo.Session, changes map[string]*CodeChang
 			content += fmt.Sprintf("## Codes updated for %v!\n", game)
 			if len(chg.Added) > 0 {
 				content += "**NEW:**\n"
-				content += util.CodeListing(chg.Added) + "\n"
+				content += util.CodeListing(chg.Added, &game) + "\n"
 			}
 			if len(chg.Removed) > 0 {
 				content += "**REMOVED:**\n"
-				content += util.CodeListing(chg.Removed) + "\n"
+				content += util.CodeListing(chg.Removed, nil) + "\n"
 			}
 
 			if link, exists := consts.RedeemURL[game]; exists {

@@ -98,7 +98,7 @@ var (
 		},
 	}
 
-	integrationTypes = []discordgo.ApplicationIntegrationType {
+	integrations = []discordgo.ApplicationIntegrationType {
 		discordgo.ApplicationIntegrationUserInstall,
 		discordgo.ApplicationIntegrationGuildInstall,
 	}
@@ -118,7 +118,7 @@ var (
 					Choices: helpChoices,
 				},
 			},
-			IntegrationTypes: &integrationTypes,
+			IntegrationTypes: &integrations,
 		},
 		/// SUBSCRIPTIONS ///
 		{
