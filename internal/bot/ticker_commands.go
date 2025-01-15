@@ -27,9 +27,9 @@ var image map[string]string = map[string]string{
 func HandleCreateTicker(s *discordgo.Session, i *discordgo.InteractionCreate, opts CmdOptMap) {
 	channelID := GetChannelID(i, opts)
 	game := opts["game"].StringValue()
+	embeds := tickerEmbeds(game, true)
 
-	content := tickerText(game, true)
-	message, err := s.ChannelMessageSend(strconv.FormatUint(channelID, 10), content)
+	message, err := s.ChannelMessageSendEmbeds(strconv.FormatUint(channelID, 10), embeds)
 	if err != nil {
 		RespondPrivate(s, i, fmt.Sprintf("Error creating ticker: %v", err))
 		return
