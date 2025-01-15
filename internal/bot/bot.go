@@ -98,6 +98,11 @@ var (
 		},
 	}
 
+	integrationTypes = []discordgo.ApplicationIntegrationType {
+		discordgo.ApplicationIntegrationUserInstall,
+		discordgo.ApplicationIntegrationGuildInstall,
+	}
+
 	adminCmdFlag int64 = discordgo.PermissionAdministrator
 
 	commands = []*discordgo.ApplicationCommand {
@@ -113,6 +118,7 @@ var (
 					Choices: helpChoices,
 				},
 			},
+			IntegrationTypes: &integrationTypes,
 		},
 		/// SUBSCRIPTIONS ///
 		{
@@ -132,12 +138,6 @@ var (
 					Type: discordgo.ApplicationCommandOptionBoolean,
 					Required: false,
 				},
-				{
-					Name: "channel",
-					Description: "Channel to create a subscription for. Default: the current channel.",
-					Type: discordgo.ApplicationCommandOptionChannel,
-					Required: false,
-				},
 			},
 		},
 		{
@@ -149,12 +149,6 @@ var (
 				optionalGameChoices[1],
 				optionalGameChoices[2],
 				optionalGameChoices[3],
-				{
-					Name: "channel",
-					Description: "Channel to configure subscribed games for. Default: current channel.",
-					Type: discordgo.ApplicationCommandOptionChannel,
-					Required: false,
-				},
 			},
 		},
 		{
@@ -162,12 +156,6 @@ var (
 			Description: "Unsubscribe a channel from all code announcements. Will leave subscription settings alone.",
 			DefaultMemberPermissions: &adminCmdFlag,
 			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Name: "channel",
-					Description: "Channel to unsubscribe. Default: current channel.",
-					Type: discordgo.ApplicationCommandOptionChannel,
-					Required: false,
-				},
 			},
 		},
 		{
@@ -180,12 +168,6 @@ var (
 					Description: "Role to ping.",
 					Type: discordgo.ApplicationCommandOptionRole,
 					Required: true,
-				},
-				{
-					Name: "channel",
-					Description: "Channel to add a ping role for. Default: current channel.",
-					Type: discordgo.ApplicationCommandOptionChannel,
-					Required: false,
 				},
 			},
 		},
@@ -200,12 +182,6 @@ var (
 					Type: discordgo.ApplicationCommandOptionRole,
 					Required: true,
 				},
-				{
-					Name: "channel",
-					Description: "Channel to remove a ping role from. Default: current channel.",
-					Type: discordgo.ApplicationCommandOptionChannel,
-					Required: false,
-				},
 			},
 		},
 		{
@@ -216,12 +192,6 @@ var (
 					Name: "all_channels",
 					Description: "Show config for all channels in this server. Default: false",
 					Type: discordgo.ApplicationCommandOptionBoolean,
-					Required: false,
-				},
-				{
-					Name: "channel",
-					Description: "Channel to show config for. Default: current channel.",
-					Type: discordgo.ApplicationCommandOptionChannel,
 					Required: false,
 				},
 			},
@@ -238,12 +208,6 @@ var (
 					Type: discordgo.ApplicationCommandOptionString,
 					Choices: GameChoices,
 					Required: true,
-				},
-				{
-					Name: "channel",
-					Description: "Channel to create the ticker. Default: current channel.",
-					Type: discordgo.ApplicationCommandOptionChannel,
-					Required: false,
 				},
 			},
 		},
@@ -268,12 +232,6 @@ var (
 					Name: "all_channels",
 					Description: "Get all ticker present in the server. Default: false",
 					Type: discordgo.ApplicationCommandOptionBoolean,
-					Required: false,
-				},
-				{
-					Name: "channel",
-					Description: "Channel to show config for. Default: current channel.",
-					Type: discordgo.ApplicationCommandOptionChannel,
 					Required: false,
 				},
 			},

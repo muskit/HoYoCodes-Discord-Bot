@@ -114,8 +114,10 @@ func tickerEmbeds(game string, willRefresh bool) []*discordgo.MessageEmbed {
 		fieldLists = append(fieldLists, util.DownstackIntoSlices(fields, 25)...)
 	}
 
-	redeem, exists := consts.RedeemURL[game]
+	// footer embed
+
 	footerFields := []*discordgo.MessageEmbedField{}
+	redeem, exists := consts.RedeemURL[game]
 	if exists {
 		footerFields = append(footerFields,
 			&discordgo.MessageEmbedField{
@@ -128,7 +130,7 @@ func tickerEmbeds(game string, willRefresh bool) []*discordgo.MessageEmbed {
 	if err != nil {
 		log.Fatalf("Error getting update time for %v: %v", game, err)
 	}
-	timeField := fmt.Sprintf("-# Checked <t:%v:R>; source updated <t:%v:R>.", checkTime.Unix(), updateTime.Unix())
+	timeField := fmt.Sprintf("-# Checked <t:%v:R>; [source](%v) updated <t:%v:R>.", checkTime.Unix(), consts.ArticleURL[game], updateTime.Unix())
 	if willRefresh {
 		refreshTime := checkTime.Add(consts.UpdateInterval)
 		timeField += fmt.Sprintf("\n-# Refreshing in <t:%v:R>.", refreshTime.Unix())
@@ -148,7 +150,6 @@ func tickerEmbeds(game string, willRefresh bool) []*discordgo.MessageEmbed {
 			curEmbed = discordgo.MessageEmbed{
 				Color: color[game],
 				Title: game,
-				URL: consts.ArticleURL[game],
 				Thumbnail: &discordgo.MessageEmbedThumbnail{
 					URL: image[game],
 				},
