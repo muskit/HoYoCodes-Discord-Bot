@@ -12,11 +12,13 @@ import (
 
 // get code recency options
 type CodeRecencyOption uint8
-const All CodeRecencyOption = 0
-const Recent CodeRecencyOption = 1
-const Unrecent CodeRecencyOption = 2
-const RecentSinceLatest CodeRecencyOption = 3
-const UnrecentSinceLatest CodeRecencyOption = 4
+const (
+	All CodeRecencyOption = iota
+	Recent
+	Unrecent
+	RecentSinceLatest
+	UnrecentSinceLatest
+)
 
 func AddCode(code string, game string, description string, livestream bool, foundTime time.Time) error {
 	_, err := DBScraper.Exec("INSERT INTO Codes SET code = ?, game = ?, description = ?, is_livestream = ?, added = ?", code, game, description, livestream, foundTime)

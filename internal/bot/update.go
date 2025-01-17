@@ -197,7 +197,12 @@ func notifySubscribers(session *discordgo.Session, changes map[string]*CodeChang
 			if dryrun { continue }
 
 			if _, err := session.ChannelMessageSend(sub.ChannelID, content); err != nil {
-				log.Fatalf("Error sending subscription notification to %v: %v", sub.ChannelID, err)
+				if strings.Contains(err.Error(), "HTTP 403") {
+					// Forbidden: no permission to post
+					slog.Debug(fmt.Sprintf("Got HTTP Forbidden 403 sending subscription notification: %v", err))
+				} else {
+					log.Fatalf("Error sending subscription notification to %v: %v", sub.ChannelID, err)
+				}
 			}
 		}
 	}

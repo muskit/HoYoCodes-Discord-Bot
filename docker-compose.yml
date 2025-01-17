@@ -3,20 +3,21 @@ services:
     build: .
     env_file: .env
     depends_on:
-      mariadb:
+      db:
         condition: service_healthy
-  mariadb:
+  db:
     image: 'mariadb:10.3'
     volumes:
       - './.run/mysql:/var/lib/mysql'
+    # ports:
+    #   - 3306:3306 # for debugging purposes
     environment:
       - MARIADB_PORT_NUMBER=${db_port}
       - MARIADB_ROOT_USER=root
       - MARIADB_ROOT_PASSWORD=root
       - MARIADB_USER=${db_user}
       - MARIADB_PASSWORD=${db_pass}
-    container_name: mariadb
-    healthcheck:
-      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+    healthcheck: # delay app from starting until ready to accept connections
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost", "-P", "${db_port}", "-u", "${db_user}", "--password=${db_pass}"]
       timeout: 5s
       retries: 10
