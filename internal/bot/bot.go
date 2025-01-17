@@ -391,11 +391,10 @@ func RunBot() {
 		log.Fatalf("Could not open Discord session: %s", err)
 	}
 
-	go UpdateRoutine(session)
-
 	// wait for interrupt
 	intrpChan := make(chan os.Signal, 1)
 	signal.Notify(intrpChan, os.Interrupt)
+	go UpdateRoutine(session, intrpChan)
 	<-intrpChan
 
 	if !UpdatingMutex.TryLock() {

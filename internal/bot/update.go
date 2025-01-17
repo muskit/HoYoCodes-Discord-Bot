@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"log/slog"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -22,9 +23,15 @@ type CodeChanges struct {
 	Removed [][]string
 }
 
-func UpdateRoutine(session *discordgo.Session) {
+func UpdateRoutine(session *discordgo.Session, interruptCh chan<-os.Signal) {
 	for {
 		slog.Info("---------- Start update loop ----------")
+		if err := db.DBsAlive(); err != nil {
+			slog.Error("One of the DBs error'd on ping!")
+			slog.Error(err.Error())
+			interruptCh<-nil
+			return
+		}
 		UpdatingMutex.Lock()
 		changes := updateCodesDB()
 		updateTickers(session)

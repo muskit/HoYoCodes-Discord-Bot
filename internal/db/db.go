@@ -18,7 +18,7 @@ const connStrScraper = "%s:%s@tcp(%s:%s)/scraper?parseTime=true"
 var DBCfg *sql.DB
 var DBScraper *sql.DB
 
-func Init() { // so it doesn't fail tests currently; use implicit for integration testing?
+func Init() { // so it doesn't fail tests currently; use implicit init for integration testing?
 	err := godotenv.Load()
 	if err != nil {
 		slog.Warn(fmt.Sprintf("Could not load .env: %v", err))
@@ -49,6 +49,16 @@ func initDB(connStr string) *sql.DB {
         log.Fatalf("error on connect: %v", err)
     }
 	return ret
+}
+
+func DBsAlive() error {
+	if err := DBCfg.Ping(); err != nil {
+		return err
+	}
+	if err := DBScraper.Ping(); err != nil {
+		return err
+	}
+	return nil
 }
 
 func IsDuplicateErr(err error) bool {

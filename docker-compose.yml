@@ -17,7 +17,9 @@ services:
       - MARIADB_ROOT_PASSWORD=root
       - MARIADB_USER=${db_user}
       - MARIADB_PASSWORD=${db_pass}
+      - MARIADB_MYSQL_LOCALHOST_USER=true
     healthcheck: # delay app from starting until ready to accept connections
-      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost", "-P", "${db_port}", "-u", "${db_user}", "--password=${db_pass}"]
-      timeout: 5s
+      test: ["CMD", "healthcheck.sh", "--su-mysql", "--connect"]
+      interval: 5s
+      timeout: 10s
       retries: 10
