@@ -102,21 +102,22 @@ func updateCodesDB() map[string]*CodeChanges {
 		}
 	}
 
-	// slog.Debug(fmt.Sprintf("%v", changes))
-	for game, chg := range changes {
-		slog.Debug(fmt.Sprintf("Changes for %v:", game))
-		if len(chg.Added) > 0 {
-			slog.Debug("Added:")
-			for _, elem := range chg.Added {
-				code, desc := elem[0], elem[1]
-				slog.Debug("", "code", code, "desc", desc)
+	if len(changes) > 0 {
+		for game, chg := range changes {
+			slog.Info(fmt.Sprintf("%v: %v added, %v removed", game, len(chg.Added), len(chg.Removed)))
+			if len(chg.Added) > 0 {
+				slog.Debug("Added:")
+				for _, elem := range chg.Added {
+					code, desc := elem[0], elem[1]
+					slog.Debug("", "code", code, "desc", desc)
+				}
 			}
-		}
-		if len(chg.Removed) > 0 {
-			slog.Debug("Removed:")
-			for _, elem := range chg.Removed {
-				code, desc := elem[0], elem[1]
-				slog.Debug("", "code", code, "desc", desc)
+			if len(chg.Removed) > 0 {
+				slog.Debug("Removed:")
+				for _, elem := range chg.Removed {
+					code, desc := elem[0], elem[1]
+					slog.Debug("", "code", code, "desc", desc)
+				}
 			}
 		}
 	}
@@ -144,66 +145,78 @@ func ShouldNotify(sub db.Subscription, chg CodeChanges) bool {
 		(sub.AnnounceRems && len(chg.Removed) > 0)
 }
 
-func notifySubscribers(session *discordgo.Session, changes map[string]*CodeChanges, dryrun bool) {
-	if len(changes) == 0 {
+func notifyContent(game string, chgs CodeChanges) string {
+	_, updateTime, err := db.GetScrapeTimes(game)
+	if err != nil {
+		log.Fatalf("Error getting scrape times for %v: %v", game, err)
+	}
+
+	content := ""
+
+	content += fmt.Sprintf("## Codes updated for %v!\n", game)
+	if len(chgs.Added) > 0 {
+		content += "**NEW:**\n"
+		content += util.CodeListing(chgs.Added, &game) + "\n"
+	}
+	if len(chgs.Removed) > 0 {
+		content += "**REMOVED:**\n"
+		content += util.CodeListing(chgs.Removed, nil) + "\n"
+	}
+
+	if link, exists := consts.RedeemURL[game]; exists {
+		content += fmt.Sprintf("\n[Redemption page](<%v>)\n", link)
+	}
+
+	footer := fmt.Sprintf("-# [source](<%v>) updated <t:%v:R>.", consts.ArticleURL[game], updateTime.Unix())
+	content += footer
+
+	return content
+}
+
+func notifySubscribers(session *discordgo.Session, gameChanges map[string]*CodeChanges, dryrun bool) {
+	if len(gameChanges) == 0 {
 		slog.Info("No changes to notify subscribers of")
 		return
 	}
 
 	slog.Info("Notify Subscribed Channels")
 
-	for game, chg := range changes {
-		_, updateTime, err := db.GetScrapeTimes(game)
-		if err != nil {
-			log.Fatalf("Error getting scrape times for %v: %v", game, err)
-		}
 
+	for game, chgs := range gameChanges {
 		subscriptions, err := db.GetGameSubscriptions(game)
 		if err != nil {
 			log.Fatalf("Error getting subscriptions for %v: %v", game, err)
 		}
 
+		// notification message for game
+		content := notifyContent(game, *chgs)
+
 		for _, sub := range subscriptions {
-			if !ShouldNotify(sub, *chg) {
+			if !ShouldNotify(sub, *chgs) {
 				continue
 			}
 
-			content := ""
+			subMsg := content
 
+			// prepend role mentions
 			roles, err := db.GetPingRoles(sub.ChannelID)
 			if err != nil {
 				log.Fatalf("Error getting ping roles for subscription %v: %v", sub.ChannelID, err)
 			}
-
 			if len(roles) > 0 {
-				content = "||"
+				mentions := "||"
 				for _, r := range roles {
-					content += fmt.Sprintf("<@&%v> ", r)
+					mentions += fmt.Sprintf("<@&%v> ", r)
 				}
-				content = strings.Trim(content, " ") + "||\n"
+				subMsg = content + strings.Trim(mentions, " ") + "||\n"
 			}
 
-			content += fmt.Sprintf("## Codes updated for %v!\n", game)
-			if len(chg.Added) > 0 {
-				content += "**NEW:**\n"
-				content += util.CodeListing(chg.Added, &game) + "\n"
-			}
-			if len(chg.Removed) > 0 {
-				content += "**REMOVED:**\n"
-				content += util.CodeListing(chg.Removed, nil) + "\n"
+			if dryrun { 
+				slog.Debug(fmt.Sprintf("for %v:\n%s", sub.ChannelID, subMsg))
+				continue
 			}
 
-			if link, exists := consts.RedeemURL[game]; exists {
-				content += fmt.Sprintf("\n[Redemption page](<%v>)\n", link)
-			}
-
-			footer := fmt.Sprintf("-# [source](<%v>) updated <t:%v:R>.\n", consts.ArticleURL[game], updateTime.Unix())
-			content += footer
-
-			slog.Debug(fmt.Sprintf("for %v:\n%s", sub.ChannelID, content))
-			if dryrun { continue }
-
-			if _, err := session.ChannelMessageSend(sub.ChannelID, content); err != nil {
+			if _, err := session.ChannelMessageSend(sub.ChannelID, subMsg); err != nil {
 				if strings.Contains(err.Error(), "HTTP 403") {
 					// Forbidden: no permission to post
 					slog.Debug(fmt.Sprintf("Got HTTP Forbidden 403 sending subscription notification: %v", err))
