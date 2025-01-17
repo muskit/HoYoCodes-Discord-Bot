@@ -18,8 +18,7 @@ const connStrScraper = "%s:%s@tcp(%s:%s)/scraper?parseTime=true"
 var DBCfg *sql.DB
 var DBScraper *sql.DB
 
-func init() {
-	// read env
+func Init() { // so it doesn't fail tests currently; use implicit for integration testing?
 	err := godotenv.Load()
 	if err != nil {
 		slog.Warn(fmt.Sprintf("Could not load .env: %v", err))

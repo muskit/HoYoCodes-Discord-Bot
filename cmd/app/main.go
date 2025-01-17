@@ -5,6 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/muskit/hoyocodes-discord-bot/internal/bot"
+	"github.com/muskit/hoyocodes-discord-bot/internal/db"
 )
 
 func main() {
@@ -14,5 +15,6 @@ func main() {
 	if *dbgFlag {
 		slog.SetLogLoggerLevel(slog.LevelDebug)
 	}
+	db.Init()
 	bot.RunBot()
 }
