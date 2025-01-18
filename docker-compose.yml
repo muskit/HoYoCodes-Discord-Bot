@@ -13,10 +13,12 @@ services:
     cap_add:
       - net_admin
     restart: unless-stopped
+    healthcheck:
+      test: tailscale status --peers=false --json | grep -q 'Online.*true'
 
   app:
     build: .
     env_file: .env
     depends_on:
       tailscale:
-        condition: service_started
+        condition: service_healthy
