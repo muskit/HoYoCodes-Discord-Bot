@@ -6,6 +6,7 @@ services:
       - TS_AUTHKEY=${ts_authkey}
       - TS_STATE_DIR=/var/lib/tailscale
       - TS_USERSPACE=false
+      - TS_HEALTHCHECK_ADDR_PORT=127.0.0.1:8080
     volumes:
       - ./tailscale:/var/lib/tailscale
     devices:
@@ -13,12 +14,15 @@ services:
     cap_add:
       - net_admin
     restart: unless-stopped
+    privileged: true
     healthcheck:
-      test: tailscale status --peers=false --json | grep -q 'Online.*true'
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8080/healthz"]
+      interval: 5s
 
   app:
     build: .
     env_file: .env
+    network_mode: service:tailscale
     depends_on:
       tailscale:
         condition: service_healthy
