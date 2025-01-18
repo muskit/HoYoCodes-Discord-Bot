@@ -1,8 +1,14 @@
-FROM alpine:latest
+# Build
+FROM golang:alpine AS build
 
-# system dependencies
+WORKDIR /build
+COPY . .
+RUN /build/scripts/build.sh
+
+# Create img from binary
+FROM alpine:latest
 RUN apk add gcompat
 
 WORKDIR /app
-COPY app /app/app
-ENTRYPOINT [ "/app/app" ]
+COPY --from=build /build/app .
+CMD ["./app"]
