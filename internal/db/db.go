@@ -51,7 +51,7 @@ func initDB(connStr string) *sql.DB {
 	return ret
 }
 
-func DBsAlive() error {
+func CheckDBs() error {
 	if err := DBCfg.Ping(); err != nil {
 		return err
 	}

@@ -26,12 +26,19 @@ type CodeChanges struct {
 func UpdateRoutine(session *discordgo.Session, interruptCh chan<-os.Signal) {
 	for {
 		slog.Info("---------- Start update loop ----------")
-		if err := db.DBsAlive(); err != nil {
+
+		// check session integrity
+		if _, err := session.User("@me"); err != nil {
+			log.Fatalf("Error getting me: %v", err)
+		}
+		// check DB operability
+		if err := db.CheckDBs(); err != nil {
 			slog.Error("One of the DBs error'd on ping!")
 			slog.Error(err.Error())
 			interruptCh<-nil
 			return
 		}
+
 		UpdatingMutex.Lock()
 		changes := updateCodesDB()
 		updateTickers(session)
@@ -219,7 +226,11 @@ func notifySubscribers(session *discordgo.Session, gameChanges map[string]*CodeC
 			if _, err := session.ChannelMessageSend(sub.ChannelID, subMsg); err != nil {
 				if strings.Contains(err.Error(), "HTTP 403") {
 					// Forbidden: no permission to post
-					slog.Debug(fmt.Sprintf("Got HTTP Forbidden 403 sending subscription notification: %v", err))
+					slog.Warn(fmt.Sprintf("HTTP Forbidden 403 sending subscription notification: %v", err))
+				} else if strings.Contains(err.Error(), "HTTP 404") {
+					// Not found: channel or message
+					// TODO: delete subscription from DB?
+					slog.Warn(fmt.Sprintf("HTTP Not Found 404 sending subscription notification: %v", err))
 				} else {
 					log.Fatalf("Error sending subscription notification to %v: %v", sub.ChannelID, err)
 				}

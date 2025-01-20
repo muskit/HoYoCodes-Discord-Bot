@@ -391,6 +391,8 @@ func RunBot() {
 		log.Fatalf("Could not open Discord session: %s", err)
 	}
 
+	session.UpdateCustomStatus("Use `/help` to learn about how I work!")
+
 	// wait for interrupt
 	intrpChan := make(chan os.Signal, 1)
 	signal.Notify(intrpChan, os.Interrupt)
