@@ -1,5 +1,3 @@
-## Work In Progress. Expect downtimes and inconsistent functionality!!
-
 **Welcome to HoyoCodes!**
 
 This bot will notify you of new goods code releases for *HoYoverse* games in two different formats:

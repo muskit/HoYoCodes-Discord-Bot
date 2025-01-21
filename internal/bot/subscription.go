@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/muskit/hoyocodes-discord-bot/internal/db"
+	"github.com/muskit/hoyocodes-discord-bot/pkg/consts"
 )
 
 func getSubsPrint(sub *db.Subscription) string {
@@ -13,7 +14,7 @@ func getSubsPrint(sub *db.Subscription) string {
 		"**Active:** %v\n"+
 		"**Announce additions:** %v\n"+
 		"**Announce removals:** %v\n"+
-		"**Games to announce (if empty, announce all):**\n"+
+		"**Games to announce:**\n"+
 		"%v" + 
 		"**Roles to ping:**\n"+
 		"%v")
@@ -23,6 +24,11 @@ func getSubsPrint(sub *db.Subscription) string {
 	games, err := db.GetSubscriptionGames(sub.ChannelID)
 	if err != nil {
 		return fmt.Sprintf("Error getting games for <#%v>: %v", sub.ChannelID, err)
+	}
+
+	if len(games) == 0 {
+		// list all games
+		games = consts.Games
 	}
 	for _, g := range games {
 		gameList += fmt.Sprintf("- %v\n", g)
