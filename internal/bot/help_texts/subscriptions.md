@@ -8,4 +8,4 @@ Subscriptions work on a *per-channel* basis; **one channel gets on subscription*
 - `/add_ping_role`: Add a role that will be pinged for a channel's subscription.
 - `/remove_ping_role`: Remove a role from being pinged for a channel's subscription.
 
-Use `/check_subcription` to check a channel's subscription. Setting the `all_channels` option will show all subscriptions set in your server.
+Use `/check_subcription` to check a channel's subscription configuration. Setting its `all_channels` option will show config for all subscriptions in your server.

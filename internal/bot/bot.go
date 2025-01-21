@@ -323,6 +323,17 @@ func RunBot() {
 	}
 
 	// EVENT HANDLERS //
+	// Bot Added to Server
+	session.AddHandler(func (s *discordgo.Session, gc *discordgo.GuildCreate) {
+		sysChan := gc.SystemChannelID
+		if sysChan != "" {
+			// send to server's system msgs
+			s.ChannelMessageSend(sysChan, helpIntro)
+		} else {
+			// TODO: send dm to admins
+		}
+	})
+
 	// Bot Interaction
 	session.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		slog.Debug(fmt.Sprintf("Received interaction of type %v", i.Type))

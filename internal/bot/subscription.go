@@ -14,7 +14,7 @@ func getSubsPrint(sub *db.Subscription) string {
 		"**Active:** %v\n"+
 		"**Announce additions:** %v\n"+
 		"**Announce removals:** %v\n"+
-		"**Games to announce:**\n"+
+		"**Tracked games:**\n"+
 		"%v" + 
 		"**Roles to ping:**\n"+
 		"%v")
