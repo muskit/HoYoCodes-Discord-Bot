@@ -82,7 +82,7 @@ func tickerEmbeds(game string, willRefresh bool) []*discordgo.MessageEmbed {
 	timeField := fmt.Sprintf("-# Checked <t:%v:R>; [source](%v) updated <t:%v:R>.", checkTime.Unix(), consts.ArticleURL[game], updateTime.Unix())
 	if willRefresh {
 		refreshTime := checkTime.Add(consts.UpdateInterval)
-		timeField += fmt.Sprintf("\n-# Refreshing in <t:%v:R>.", refreshTime.Unix())
+		timeField += fmt.Sprintf("\n-# Refreshing <t:%v:R>.", refreshTime.Unix())
 	}
 
 	footerFields = append(footerFields,
