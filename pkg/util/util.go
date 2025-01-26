@@ -24,7 +24,7 @@ func CodeListing(codes [][]string, game *string) string {
 
 		if addURL {
 			url := CodeRedeemURL(code, *game);
-			line = fmt.Sprintf("- [`%v`](%v) - %v", code, *url, description)
+			line = fmt.Sprintf("- [`%v`](<%v>) - %v", code, *url, description)
 		} else {
 			line = fmt.Sprintf("- `%v` - %v", code, description)
 		}
