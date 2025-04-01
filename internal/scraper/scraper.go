@@ -46,7 +46,7 @@ var Configs []ScrapeConfig = []ScrapeConfig{
 // return a map of codes and their description, as well as
 // the datetime which the data was updated.
 func ScrapePJT(cfg ScrapeConfig) (map[string]string, string) {
-	slog.Debug(fmt.Sprintf("[%s] - %s\n", cfg.Game, cfg.Heading))
+	slog.Info(fmt.Sprintf("[%s] - %s\n", cfg.Game, cfg.Heading))
 
 	// scraped data
 	activeCodes := make(map[string]string)
@@ -56,30 +56,41 @@ func ScrapePJT(cfg ScrapeConfig) (map[string]string, string) {
 
 	// --- callback setup ---
 	c.OnRequest(func(r *colly.Request) {
-		slog.Debug(fmt.Sprintf("Visiting %s", cfg.URL))
+		slog.Info(fmt.Sprintf("Visiting %s", cfg.URL))
 	})
 
 	// populate codes
 	c.OnHTML("strong, b", func(h *colly.HTMLElement) {
 		if strings.Contains(h.Text, cfg.Heading) {
-			slog.Debug("", "header", h.Text)
+			slog.Info("", "header", h.Text)
 			if strings.Contains(h.Text, "expire") {
-				slog.Debug("Appears to have expired according to header; stopping...")
+				slog.Info("Appears to have expired according to header; stopping...")
 				return
 			}
 
-			slog.Debug("Gathering codes...")
+			slog.Info("Gathering codes...")
 
 			listContainer := h.DOM.Parent().Next()
 			list := listContainer.Children()
 
-			for _, elem := range list.Nodes {
-				entry := elem.FirstChild
-				key := entry.FirstChild.Data
-				desc := string([]rune(entry.NextSibling.Data)[3:])
+			for i, e := range list.Nodes {
+				key := ""
+				entry := e.FirstChild
+				if entry.FirstChild != nil {
+					key = entry.FirstChild.Data
+				} else {
+					key = entry.Data
+				}
 
+				desc := ""
+				entryNext := entry.NextSibling
+				if entryNext != nil {
+					desc = string([]rune(entryNext.Data)[3:])
+				} else {
+					slog.Warn(fmt.Sprintf("%v has no description element", key))
+				}
 				activeCodes[key] = desc
-				// slog.Debug(fmt.Sprintf("%d: [%s] (%s)\n", i, key, desc))
+				slog.Debug(fmt.Sprintf("%d: [%s] (%s)\n", i, key, desc))
 			}
 		}
 	})
@@ -88,7 +99,7 @@ func ScrapePJT(cfg ScrapeConfig) (map[string]string, string) {
 	c.OnHTML("time", func(h *colly.HTMLElement) {
 		if h.DOM.HasClass("updated") {
 			datetime = h.Attr("datetime")
-			slog.Debug(fmt.Sprintf("Update datetime: %s", datetime))
+			slog.Info(fmt.Sprintf("Update datetime: %s", datetime))
 		}
 	})
 
@@ -97,9 +108,10 @@ func ScrapePJT(cfg ScrapeConfig) (map[string]string, string) {
 
 	// TODO: check that data to return is good
 
-	slog.Debug(fmt.Sprintf("%d codes", len(activeCodes)))
 	if len(activeCodes) == 0 {
-		slog.Warn("Returning 0 codes!", "game", cfg.Game, "heading", cfg.Heading)
+		slog.Warn("Returning 0 codes!")
+	} else {
+		slog.Info(fmt.Sprintf("Found %d codes", len(activeCodes)))
 	}
 
 	slog.Debug("Finished scraping.")
