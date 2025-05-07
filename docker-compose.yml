@@ -27,3 +27,8 @@ services:
     depends_on:
       tailscale:
         condition: service_healthy
+    restart_policy:
+      condition: on-failure
+      delay: 3s
+      max_attempts: 5
+      window: 60s
