@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+	"unicode"
 
 	"github.com/gocolly/colly"
 )
@@ -81,16 +82,23 @@ func ScrapePJT(cfg ScrapeConfig) (map[string]string, string) {
 				} else {
 					key = entry.Data
 				}
+				key = strings.TrimSpace(key)
+				slog.Debug(fmt.Sprintf("key: %v", key))
 
 				desc := ""
 				entryNext := entry.NextSibling
 				if entryNext != nil {
-					desc = string([]rune(entryNext.Data)[3:])
+					slog.Debug(fmt.Sprintf("entryNext: %v", entryNext.Data))
+					desc = string([]rune(entryNext.Data))
+					desc = strings.TrimLeftFunc(desc, func(r rune) bool {
+						// returns true to remove
+						return !(unicode.IsLetter(r) || unicode.IsNumber(r))
+					})
 				} else {
 					slog.Warn(fmt.Sprintf("%v has no description element", key))
 				}
 				activeCodes[key] = desc
-				slog.Debug(fmt.Sprintf("%d: [%s] (%s)\n", i, key, desc))
+				slog.Info(fmt.Sprintf("%d: [%s] (%s)\n", i, key, desc))
 			}
 		}
 	})
