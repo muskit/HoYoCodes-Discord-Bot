@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
-	"unicode"
 
 	"github.com/gocolly/colly"
+	"github.com/muskit/hoyocodes-discord-bot/pkg/util"
 )
 
 type ScrapeConfig struct {
@@ -82,7 +82,7 @@ func ScrapePJT(cfg ScrapeConfig) (map[string]string, string) {
 				} else {
 					key = entry.Data
 				}
-				key = strings.TrimSpace(key)
+				key = util.AlphaNumStrip(key)
 				slog.Debug(fmt.Sprintf("key: %v", key))
 
 				desc := ""
@@ -90,10 +90,7 @@ func ScrapePJT(cfg ScrapeConfig) (map[string]string, string) {
 				if entryNext != nil {
 					slog.Debug(fmt.Sprintf("entryNext: %v", entryNext.Data))
 					desc = string([]rune(entryNext.Data))
-					desc = strings.TrimLeftFunc(desc, func(r rune) bool {
-						// returns true to remove
-						return !(unicode.IsLetter(r) || unicode.IsNumber(r))
-					})
+					desc = util.AlphaNumStrip(desc)
 				} else {
 					slog.Warn(fmt.Sprintf("%v has no description element", key))
 				}

@@ -3,6 +3,7 @@ package util
 import (
 	"fmt"
 	"strings"
+	"unicode"
 
 	"github.com/muskit/hoyocodes-discord-bot/pkg/consts"
 )
@@ -55,4 +56,14 @@ func DownstackIntoSlices[T any](slice []T, cap int) [][]T {
 		slice = overflow
 	}
 	return append(slices, slice)
+}
+
+func AlphaNumStrip(s string) string {
+	ret := strings.TrimLeftFunc(s, func(r rune) bool {
+		return !(unicode.IsLetter(r) || unicode.IsNumber(r))
+	})
+	
+	ret = strings.TrimSpace(ret)
+	
+	return ret
 }

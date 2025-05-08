@@ -1,7 +1,9 @@
-package util
+package util_test
 
 import (
 	"testing"
+
+	"github.com/muskit/hoyocodes-discord-bot/pkg/util"
 )
 
 func TestCodeListing(t *testing.T) {
@@ -11,9 +13,9 @@ func TestCodeListing(t *testing.T) {
 	}
 	game := "Genshin Impact"
 	expected :=
-		"- [`ABC123`](https://genshin.hoyoverse.com/en/gift?code=ABC123) - This is a test code description that is quite long\n"+
-		"- [`XYZ789`](https://genshin.hoyoverse.com/en/gift?code=XYZ789) - Short desc"
-	result := CodeListing(codes, &game)
+		"- [`ABC123`](<https://genshin.hoyoverse.com/en/gift?code=ABC123>) - This is a test code description that is quite long\n"+
+		"- [`XYZ789`](<https://genshin.hoyoverse.com/en/gift?code=XYZ789>) - Short desc"
+	result := util.CodeListing(codes, &game)
 	if result != expected {
 		t.Errorf("expected %v, got %v", expected, result)
 	}
@@ -22,7 +24,7 @@ func TestCodeListing(t *testing.T) {
 	expected =
 		"- `ABC123` - This is a test code description that is quite long\n"+
 		"- `XYZ789` - Short desc"
-	result = CodeListing(codes, nil)
+	result = util.CodeListing(codes, nil)
 	if result != expected {
 		t.Errorf("expected %v, got %v", expected, result)
 	}
@@ -32,13 +34,13 @@ func TestCodeRedeemURL(t *testing.T) {
 	code := "ABC123"
 	game := "Genshin Impact"
 	expected := "https://genshin.hoyoverse.com/en/gift?code=ABC123"
-	result := CodeRedeemURL(code, game)
+	result := util.CodeRedeemURL(code, game)
 	if result == nil || *result != expected {
 		t.Errorf("expected %v, got %v", expected, result)
 	}
 
 	game = "Unknown Game"
-	result = CodeRedeemURL(code, game)
+	result = util.CodeRedeemURL(code, game)
 	if result != nil {
 		t.Errorf("expected nil, got %v", *result)
 	}
@@ -52,7 +54,7 @@ func TestDownstackIntoSlices(t *testing.T) {
 		{4, 5, 6},
 		{7, 8, 9},
 	}
-	result := DownstackIntoSlices(slice, capacity)
+	result := util.DownstackIntoSlices(slice, capacity)
 	for i := range expected {
 		for j := range expected[i] {
 			if result[i][j] != expected[i][j] {
@@ -70,7 +72,7 @@ func TestDownstackIntoSlicesNonDivisible(t *testing.T) {
 		{4, 5, 6},
 		{7, 8},
 	}
-	result := DownstackIntoSlices(slice, capacity)
+	result := util.DownstackIntoSlices(slice, capacity)
 	for i := range expected {
 		for j := range expected[i] {
 			if result[i][j] != expected[i][j] {
@@ -78,4 +80,25 @@ func TestDownstackIntoSlicesNonDivisible(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestAlphaNumStrip(t *testing.T) {
+	s := " GA3M24Z5C5KT "
+	expected := "GA3M24Z5C5KT"
+	if util.AlphaNumStrip(s) != expected {
+		t.Fail()
+	}
+
+	s = "– 60 stellar jade (new!)"
+	expected = "60 stellar jade (new!)"
+	if util.AlphaNumStrip(s) != expected {
+		t.Fail()
+	}
+
+	s = " – 60 stellar jade (new!) "
+	expected = "60 stellar jade (new!)"
+	if util.AlphaNumStrip(s) != expected {
+		t.Fail()
+	}
+
 }

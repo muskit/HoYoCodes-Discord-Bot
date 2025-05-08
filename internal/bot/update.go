@@ -67,17 +67,16 @@ func updateCodesDB() map[string]*CodeChanges {
 			updateTime, _ = time.Parse(time.RFC3339, updateTimeStr)
 			for code, desc := range codes {
 				pageCodes = append(pageCodes, code)
-				if err := db.AddCode(code, cfg.Game, desc, livestream, updateTime); err != nil {
-					if !db.IsDuplicateErr(err) {
-						log.Fatalf("Error adding code to database: %v\n", err)
-					}
-				} else {
-					// new code added
+				if addedNewCode, err := db.AddCode(code, cfg.Game, desc, livestream, updateTime); addedNewCode {
 					slog.Debug("Found new code!", "game", cfg.Game, "code", code)
 					if _, exists := changes[cfg.Game]; !exists {
 						changes[cfg.Game] = &CodeChanges{}
 					}
 					changes[cfg.Game].Added = append(changes[cfg.Game].Added, []string{code, desc})
+				} else {
+					if err != nil && !db.IsDuplicateErr(err) {
+						log.Fatalf("Error adding code to database: %v\n", err)
+					}
 				}
 			}
 			// set for next check

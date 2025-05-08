@@ -1,7 +1,25 @@
 on: [push]
 jobs:
+    test:
+        name: Go Source Tests
+        runs-on: ubuntu-latest
+        steps:
+        - uses: actions/checkout@v4
+        -
+            name: "Setup Go"
+            uses: actions/setup-go@v5
+            with:
+                go-version: '1.23.x'
+        # -
+        #     name: Install dependencies
+        #     run: go get .
+        - 
+            name: Test with the Go CLI
+            run: go test ./...
+        
     build-push:
         runs-on: ubuntu-latest
+        needs: test
         steps:
         -
             name: Login to GitHub Container Registry

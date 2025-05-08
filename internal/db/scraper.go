@@ -20,9 +20,26 @@ const (
 	UnrecentSinceLatest
 )
 
-func AddCode(code string, game string, description string, livestream bool, foundTime time.Time) error {
-	_, err := DBScraper.Exec("INSERT INTO Codes SET code = ?, game = ?, description = ?, is_livestream = ?, added = ?", code, game, description, livestream, foundTime)
-	return err
+// bool: if a new code was added in or not
+func AddCode(code string, game string, description string, livestream bool, foundTime time.Time) (bool, error) {
+	c := ""
+	err := DBScraper.QueryRow("SELECT code FROM Codes WHERE game = ? AND code = ?", game, code).Scan(&c)
+
+	if err == nil {
+		// code exists; update desc
+		_, err := DBScraper.Exec("UPDATE Codes SET description = ? WHERE game = ? AND code = ?", description, game, code)
+		if err != nil {
+			return false, fmt.Errorf("error updating existing code description: %v", err)
+		}
+		return false, err
+	}
+
+	if err == sql.ErrNoRows {
+		// code doesn't exist; add it
+		_, err = DBScraper.Exec("INSERT INTO Codes SET code = ?, game = ?, description = ?, is_livestream = ?, added = ?", code, game, description, livestream, foundTime)
+	}
+
+	return true, err
 }
 
 // input is slice of code,description pairs
