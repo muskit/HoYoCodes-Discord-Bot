@@ -6,7 +6,8 @@ COPY . .
 RUN /build/scripts/build.sh
 
 # Create img from binary
-FROM alpine:latest
+FROM alpine:latest as prod
+LABEL org.opencontainers.image.source https://github.com/muskit/HoYoCodes-Discord-Bot
 RUN apk add gcompat
 
 WORKDIR /app
