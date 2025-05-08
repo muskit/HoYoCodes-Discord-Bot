@@ -1,37 +1,14 @@
 services:
-  tailscale:
-    image: tailscale/tailscale:latest
-    environment:
-      - TS_HOSTNAME=hoyocodes-db
-      - TS_AUTHKEY=${ts_authkey}
-      - TS_STATE_DIR=/var/lib/tailscale
-      - TS_USERSPACE=false
-    volumes:
-      - ./tailscale:/var/lib/tailscale
-    devices:
-      - /dev/net/tun:/dev/net/tun
-    cap_add:
-      - net_admin
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8080/healthz"]
-      start_period: 10s
-      interval: 5s
-
   db:
     image: 'mariadb:10.3'
-    volumes:
-      - './mysql:/var/lib/mysql'
-    # ports:
-    #   - 3306:3306 # for debugging purposes
+    # volumes:
+    #   - './mysql:/var/lib/mysql'
+    ports:
+      - 3306:3306 # for debugging purposes
     environment:
-      - MARIADB_PORT_NUMBER=${db_port}
+      - MARIADB_PORT_NUMBER=3306
       - MARIADB_ROOT_USER=root
       - MARIADB_ROOT_PASSWORD=root
-      - MARIADB_USER=${db_user}
-      - MARIADB_PASSWORD=${db_pass}
+      - MARIADB_USER=monty
+      - MARIADB_PASSWORD=monty
       - MARIADB_MYSQL_LOCALHOST_USER=true
-    depends_on:
-      tailscale:
-        condition: service_healthy
-    network_mode: service:tailscale
