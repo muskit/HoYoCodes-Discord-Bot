@@ -12,4 +12,4 @@ RUN apk add gcompat
 
 WORKDIR /app
 COPY --from=build /build/app .
-CMD ["./app"]
+CMD ["./app", "-debug"]

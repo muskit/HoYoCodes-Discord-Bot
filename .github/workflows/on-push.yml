@@ -48,7 +48,7 @@ jobs:
                 username: ${{ secrets.SSH_USER }}
                 key: ${{ secrets.SSH_KEY }}
                 script: |
-                    ## container image doesn't have docker compose ##
+                    ## container vm image doesn't have docker compose ##
                     docker-compose() {
                         docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD:$PWD" -w="$PWD" docker/compose:1.27.4 $@
                     }

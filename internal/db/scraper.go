@@ -115,6 +115,7 @@ func GetCodes(game string, recency CodeRecencyOption, livestream bool) [][]strin
 }
 
 func GetRemovedCodes(codes []string, game string, removeFromDB bool) ([][]string, error) {
+	slog.Debug(fmt.Sprintf("GetRemovedCodes (%s)", game))
 	result := [][]string{}
 	codesPlaceholder := Placeholders(len(codes))
 
@@ -123,6 +124,7 @@ func GetRemovedCodes(codes []string, game string, removeFromDB bool) ([][]string
 	queryArgs[0] = game
 	for i, v := range codes {
 		queryArgs[i+1] = v
+		slog.Debug(fmt.Sprintf("queryArg[%v]: %v", i+1, v))
 	}
 
 	q := fmt.Sprintf("SELECT code, description FROM Codes WHERE game = ? AND code NOT IN (%s)", codesPlaceholder)
