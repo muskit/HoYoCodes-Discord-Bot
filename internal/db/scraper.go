@@ -114,15 +114,20 @@ func GetCodes(game string, recency CodeRecencyOption, livestream bool) [][]strin
 	return codes
 }
 
-func GetRemovedCodes(codes []string, game string, removeFromDB bool) ([][]string, error) {
+func GetRemovedCodes(listedCodes []string, game string, removeFromDB bool) ([][]string, error) {
+	if len(listedCodes) == 0 {
+		// so we don't error the query
+		listedCodes = append(listedCodes, "")
+	}
+
 	slog.Debug(fmt.Sprintf("GetRemovedCodes (%s)", game))
 	result := [][]string{}
-	codesPlaceholder := Placeholders(len(codes))
+	codesPlaceholder := Placeholders(len(listedCodes))
 
 	// convert to any slice
-	queryArgs := make([]any, len(codes) + 1)
+	queryArgs := make([]any, len(listedCodes) + 1)
 	queryArgs[0] = game
-	for i, v := range codes {
+	for i, v := range listedCodes {
 		queryArgs[i+1] = v
 		slog.Debug(fmt.Sprintf("queryArg[%v]: %v", i+1, v))
 	}
