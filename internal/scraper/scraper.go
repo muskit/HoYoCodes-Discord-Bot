@@ -18,7 +18,7 @@ type ScrapeConfig struct {
 var HI3_ScrCfg ScrapeConfig = ScrapeConfig{
 	Game: "Honkai Impact 3rd",
 	URL: "https://www.pockettactics.com/honkai-impact/codes",
-	Heading: "Here are all the new Honkai Impact codes",
+	Heading: "Here are the new Honkai Impact codes",
 }
 var GI_ScrCfg ScrapeConfig = ScrapeConfig{
 	Game: "Genshin Impact",
