@@ -5,6 +5,7 @@ import (
 	"log"
 	"log/slog"
 	"strings"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/muskit/hoyocodes-discord-bot/internal/db"
@@ -141,5 +142,8 @@ func UpdateEmbedTickersGame(s *discordgo.Session, game string) {
 				log.Fatalf("Error updating ticker: %v", err)
 			}
 		}
+		// attempt to resolve:
+		// HTTP 503 Service Unavailable, upstream connect error or disconnect/reset before headers. reset reason: overflow
+		time.Sleep(500*time.Millisecond)
 	}
 }
