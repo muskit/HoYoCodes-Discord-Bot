@@ -129,21 +129,37 @@ func UpdateEmbedTickersGame(s *discordgo.Session, game string) {
 			Content: new(string),
 			Embeds: &embeds,
 		}
-		if _, err = s.ChannelMessageEditComplex(&edit); err != nil {
-			if strings.Contains(err.Error(), "HTTP 404") {
-				// message no longer exists -- delete from db
-				err := db.RemoveTicker(messageID)
-				if err != nil {
-					slog.Error(fmt.Sprintf("Error removing 404'd ticker from db during update: %v", err))
-				}
-			} else if strings.Contains(err.Error(), "HTTP 403") {
-				slog.Warn(fmt.Sprintf("HTTP Forbidden 403 while editing ticker %v: %v", messageID, err))
-			} else {
+
+
+		var err error = nil
+		for attempts := 0; attempts <= 5; attempts++ {
+			if attempts == 5 {
 				log.Fatalf("Error updating ticker: %v", err)
 			}
+
+			_, err = s.ChannelMessageEditComplex(&edit);
+			if err != nil {
+				if strings.Contains(err.Error(), "HTTP 404") {
+					// message no longer exists -- delete from db
+					err := db.RemoveTicker(messageID)
+					if err != nil {
+						slog.Error(fmt.Sprintf("Error removing 404'd ticker from db during update: %v", err))
+						break
+					}
+				} else if strings.Contains(err.Error(), "HTTP 403") {
+					slog.Warn(fmt.Sprintf("HTTP Forbidden 403 while editing ticker %v: %v", messageID, err))
+					break
+				} else {
+					log.Fatalf("Error updating ticker: %v", err)
+				}
+			} else {
+				break
+			}
+
+			// we errored; attempt to resolve by delaying repeat:
+			// HTTP 503 Service Unavailable, upstream connect error or disconnect/reset before headers. reset reason: overflow
+			slog.Warn(fmt.Sprintf("Error updating ticker: %v", err))
+			time.Sleep(5*time.Second)
 		}
-		// attempt to resolve:
-		// HTTP 503 Service Unavailable, upstream connect error or disconnect/reset before headers. reset reason: overflow
-		time.Sleep(500*time.Millisecond)
 	}
 }
