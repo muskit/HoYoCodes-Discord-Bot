@@ -2,6 +2,7 @@ package util
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"unicode"
 
@@ -58,11 +59,17 @@ func DownstackIntoSlices[T any](slice []T, cap int) [][]T {
 	return append(slices, slice)
 }
 
+func ReplaceNonAlphanumeric(s string) string {
+	re := regexp.MustCompile(`[^a-zA-Z0-9.,!?;:'"()\[\]{}<>/\-\-\ ]`)
+	return re.ReplaceAllString(s, "")
+}
+
 func AlphaNumStrip(s string) string {
 	ret := strings.TrimLeftFunc(s, func(r rune) bool {
 		return !(unicode.IsLetter(r) || unicode.IsNumber(r))
 	})
-	
+
+	ret = ReplaceNonAlphanumeric(ret)
 	ret = strings.TrimSpace(ret)
 	
 	return ret
