@@ -134,17 +134,20 @@ func UpdateEmbedTickersGame(s *discordgo.Session, game string) {
 		var err error = nil
 		for attempts := 0; attempts <= 5; attempts++ {
 			if attempts == 5 {
-				log.Fatalf("Error updating ticker: %v", err)
+				log.Fatalf("Error updating ticker after 5 attempts: %v", err)
 			}
 
 			_, err = s.ChannelMessageEditComplex(&edit);
 			if err != nil {
+				slog.Debug(fmt.Sprintf("Error updating ticker msg #%v!\n\tError() = %s", edit.ID, err.Error()))
 				if strings.Contains(err.Error(), "HTTP 404") {
 					// message no longer exists -- delete from db
 					err := db.RemoveTicker(messageID)
 					if err != nil {
 						slog.Error(fmt.Sprintf("Error removing 404'd ticker from db during update: %v", err))
 						break
+					} else {
+						slog.Debug("Successfully removed non-existent ticker.")
 					}
 				} else if strings.Contains(err.Error(), "HTTP 403") {
 					slog.Warn(fmt.Sprintf("HTTP Forbidden 403 while editing ticker %v: %v", messageID, err))
