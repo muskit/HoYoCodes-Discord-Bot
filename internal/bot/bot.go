@@ -169,6 +169,9 @@ var (
 					Required: true,
 				},
 			},
+			IntegrationTypes: &[]discordgo.ApplicationIntegrationType{
+				discordgo.ApplicationIntegrationGuildInstall,
+			},
 		},
 		{
 			Name: "remove_ping_role",
@@ -181,6 +184,9 @@ var (
 					Type: discordgo.ApplicationCommandOptionRole,
 					Required: true,
 				},
+			},
+			IntegrationTypes: &[]discordgo.ApplicationIntegrationType{
+				discordgo.ApplicationIntegrationGuildInstall,
 			},
 		},
 		{
