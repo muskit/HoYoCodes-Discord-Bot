@@ -246,6 +246,11 @@ var (
 					Required: false,
 				},
 			},
+			Contexts: &[]discordgo.InteractionContextType{
+				discordgo.InteractionContextGuild,
+				discordgo.InteractionContextPrivateChannel,
+				discordgo.InteractionContextBotDM,
+			},
 		},
 	}
 )
