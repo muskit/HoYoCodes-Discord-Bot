@@ -230,7 +230,7 @@ var (
 		/// MISC ///
 		{
 			Name: "active_codes",
-			Description: "Privately get the current active codes for a game.",
+			Description: "Get the current active codes for a game.",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Name: "game",
@@ -238,6 +238,12 @@ var (
 					Type: discordgo.ApplicationCommandOptionString,
 					Choices: GameChoices,
 					Required: true,
+				},
+				{
+					Name: "private",
+					Description: "Show the codes only to you privately.",
+					Type: discordgo.ApplicationCommandOptionBoolean,
+					Required: false,
 				},
 			},
 		},

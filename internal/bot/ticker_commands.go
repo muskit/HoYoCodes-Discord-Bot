@@ -112,8 +112,10 @@ func HandleActiveCodes(s *discordgo.Session, i *discordgo.InteractionCreate, opt
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Embeds: embeds,
-			Flags: discordgo.MessageFlagsEphemeral,
 		},
+	}
+	if notifyPvt, exists := opts["private"]; exists && notifyPvt.BoolValue() {
+		resp.Data.Flags = discordgo.MessageFlagsEphemeral
 	}
 	s.InteractionRespond(i.Interaction, &resp)
 }
